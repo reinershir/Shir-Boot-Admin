@@ -1,7 +1,7 @@
 import { login, logout, getInfo } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
-import md5 from 'js-md5';
+import md5 from 'js-md5'
 
 const state = {
   token: getToken(),

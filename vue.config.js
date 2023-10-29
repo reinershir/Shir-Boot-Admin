@@ -36,16 +36,7 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    proxy: {
-      [process.env.VUE_APP_BASE_API]: {
-        target: process.env.VUE_APP_BASE_API,
-        changeOrigin: true,  //配置跨域
-        pathRewrite: {
-          ['^' + process.env.VUE_APP_BASE_API]: ''
-        }
-      }
-    }
-    // before: require('./mock/mock-server.js')
+    before: require('./mock/mock-server.js')
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
