@@ -183,11 +183,40 @@ export default {
     status: 'status',
     profile: 'avator',
     password: 'password',
+    requirePassword: 'Please enter the confirmation password',
+    unmatchPassword: 'The password is inconsistent',
     hint: {
       nickName: 'Please enter your nickname',
       email: 'Please enter your email',
       phoneNumber: 'Please enter your phone number',
       password: 'Please enter your password'
+    },
+    button: {
+      resetPassword: 'Reset password'
+    }
+  },
+  role: {
+    roleName: 'role name',
+    description: 'role description',
+    menu: 'menu'
+  },
+  menu: {
+    menuName: 'Menu name',
+    permissionCodes: 'permission code',
+    property: 'property',
+    addChild: 'Add submenu',
+    parentMenu: 'Parent menu',
+    moveMenu: 'Move menu',
+    before: 'front',
+    after: 'behind',
+    lastChild: 'last of the target children',
+    position: 'position'
+  },
+  common: {
+    label: {
+      createDate: 'create date',
+      updateDate: 'update date',
+      description: 'description'
     },
     hint: {
       input: 'Please enter your ',
@@ -207,8 +236,9 @@ export default {
       create: 'Create',
       close: 'Close',
       submit: 'Submit',
-      operation: 'operation'
-
+      operation: 'operation',
+      enable: 'Enable',
+      disable: 'Disable'
     }
   }
 }

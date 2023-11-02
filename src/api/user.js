@@ -18,8 +18,8 @@ export function getInfo(token) {
 
 export function logout() {
   return request({
-    url: '/user/logout',
-    method: 'post'
+    url: '/user/token',
+    method: 'delete'
   })
 }
 
@@ -63,7 +63,32 @@ export function update(data) {
 
 export function deleteById(data) {
   return request({
-    url: '/user/'+data,
+    url: '/user/' + data,
     method: 'delete'
+  })
+}
+
+export function enable(data) {
+  return request({
+    url: '/user/' + data + '/enable',
+    method: 'patch'
+  })
+}
+
+export function disable(data) {
+  return request({
+    url: '/user/' + data + '/disable',
+    method: 'patch'
+  })
+}
+
+export function resetPassword(data) {
+  return request({
+    url: '/user/password/reset',
+    method: 'patch',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    data
   })
 }

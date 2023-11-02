@@ -183,18 +183,46 @@ export default {
     status: '状态',
     profile: '头像',
     password: '密码',
+    requirePassword: '请输入确认密码',
+    unmatchPassword: '两次输入密码不一致',
     hint: {
       nickName: '请输入用户名称',
       loginName: '请输入登陆名',
       email: '请输入邮箱',
       phoneNumber: '请输入手机号',
       remark: '请输入备注'
+    },
+    button: {
+      resetPassword: '重置密码'
     }
+  },
+  role: {
+    roleName: '角色名称',
+    description: '角色描述',
+    menu: '菜单'
+  },
+  menu: {
+    menuName: '菜单名称',
+    permissionCodes: '权限码',
+    property: '属性',
+    addChild: '添加子菜单',
+    parentMenu: '父级菜单',
+    moveMenu: '移动',
+    before: '前',
+    after: '后',
+    lastChild: '子节点末尾',
+    position: '位置',
+    selectCell: 'Please select a row'
   },
   common: {
     status: {
       disable: '禁用',
       enable: '正常'
+    },
+    label: {
+      createDate: '创建时间',
+      updateDate: '更新时间',
+      description: '描述'
     },
     hint: {
       input: '请输入',
@@ -220,7 +248,9 @@ export default {
       copyFail: '复制失败',
       copyUrl: '复制链接',
       create: '创建',
-      operation: '操作'
+      operation: '操作',
+      enable: '启用',
+      disable: '禁用'
     }
   }
 }

@@ -46,7 +46,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column width="320px" align="center" :label="$t('user.nickName')">
+      <el-table-column width="180px" align="center" :label="$t('user.nickName')">
         <template slot-scope="scope">
           <span>{{ scope.row.nickName }}</span>
         </template>
@@ -112,14 +112,27 @@
         </template>
       </el-table-column>-->
 
-      <el-table-column align="center" :label="$t('common.button.operation')" lign="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column align="center" :label="$t('common.button.operation')" lign="center" width="260" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
-          <el-button class="filter-item" type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
-            {{ $t('common.button.edit') }}
-          </el-button>
-          <el-button size="small" type="danger" @click="handleDelete(row, $index)">
-            {{ $t('common.button.delete') }}
-          </el-button>
+          <div>
+            <el-button class="filter-item" type="primary" size="mini" icon="el-icon-edit" @click="handleUpdate(row)">
+              {{ $t('common.button.edit') }}
+            </el-button>
+            <el-button size="small" type="danger" @click="handleDelete(row, $index)">
+              {{ $t('common.button.delete') }}
+            </el-button>
+            <el-button size="small" type="primary" @click="handleResetPassword(row)">
+              {{ $t('user.button.resetPassword') }}
+            </el-button>
+          </div>
+          <div style="margin-top: 10px;">
+            <el-button class="filter-item" type="primary" size="mini" icon="el-icon-check" @click="handleEnable(row, $index)">
+              {{ $t('common.button.enable') }}
+            </el-button>
+            <el-button size="small" type="danger" icon="el-icon-close" @click="handleDisable(row, $index)">
+              {{ $t('common.button.disable') }}
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -159,7 +172,7 @@
         <el-form-item label="Imp">
           <el-rate v-model="temp.importance" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" :max="3" style="margin-top:8px;" />
         </el-form-item>-->
-        <el-form-item prop="password" v-if="dialogStatus === 'create'" :label="$t('user.password')">
+        <el-form-item v-if="dialogStatus === 'create'" prop="password" :label="$t('user.password')">
           <el-input v-model="info.password" type="password" placeholder="Please input Password" />
         </el-form-item>
         <el-form-item prop="email" :label="$t('user.email')">
@@ -181,12 +194,38 @@
         </el-button>
       </div>
     </el-dialog>
+    <el-dialog :title="$t('user.button.resetPassword')" :visible.sync="resetPasswordDialogVisible">
+      <el-form
+        ref="resetForm"
+        :model="pwd"
+        :rules="rules"
+        label-position="left"
+        label-width="150px"
+        style="width: 500px; margin-left:50px;"
+      >
+        <el-input v-show="false" v-model="pwd.user" />
+        <el-form-item prop="newPassword" :label="$t('user.password')">
+          <el-input v-model="pwd.newPassword" type="password" placeholder="Please input Password" />
+        </el-form-item>
+        <el-form-item prop="requiredPassword" :label="$t('user.requirePassword')">
+          <el-input v-model="pwd.requiredPassword" type="password" placeholder="Please input your confirmation password" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="resetPasswordDialogVisible = false">
+          {{ $t('common.button.cancel') }}
+        </el-button>
+        <el-button type="primary" @click="resetPassword()">
+          {{ $t('common.button.save') }}
+        </el-button>
+      </div>
+    </el-dialog>
 
   </div>
 </template>
 
 <script>
-import { fetchList, create, update, deleteById } from '@/api/user'
+import { fetchList, create, update, deleteById, enable, disable, resetPassword } from '@/api/user'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import md5 from 'js-md5'
 
@@ -210,6 +249,15 @@ export default {
     }
   },
   data() {
+    const validatePassword = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error(this.$t('user.requirePassword')))
+      } else if (value !== this.pwd.newPassword) {
+        callback(new Error(this.$t('user.unmatchPassword')))
+      } else {
+        callback()
+      }
+    }
     return {
       list: null,
       total: 0,
@@ -221,6 +269,7 @@ export default {
       },
       dialogFormVisible: false,
       dialogVisible: false,
+      resetPasswordDialogVisible: false,
       dialogStatus: '',
       textMap: {
         update: this.$t('common.button.edit'),
@@ -237,10 +286,17 @@ export default {
         remark: '',
         status: 0
       },
+      pwd: {
+        user: '',
+        newPassword: '',
+        requiredPassword: ''
+      },
       rules: {
         loginName: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.loginName') }],
         nickName: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.nickName') }],
-        password: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }]
+        password: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }],
+        newPassword: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }],
+        requiredPassword: [{ required: true, validator: validatePassword, trigger: 'blue' }]
       }
     }
   },
@@ -283,12 +339,18 @@ export default {
     },
     handleUpdate(row) {
       this.info = Object.assign({}, row) // copy obj
-      // this.rules.password = [{ required: false }]
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.showPassword = false
       this.$nextTick(() => {
         this.$refs['dataForm'].clearValidate()
+      })
+    },
+    handleResetPassword(row) {
+      this.pwd.user = row.id
+      this.resetPasswordDialogVisible = true
+      this.$nextTick(() => {
+        this.$refs['resetForm'].clearValidate()
       })
     },
     handleDelete(row, index) {
@@ -306,6 +368,58 @@ export default {
               duration: 2000
             })
             this.list.splice(index, 1)
+          } else {
+            this.$notify({
+              title: 'Faile',
+              message: response.message,
+              type: 'faile',
+              duration: 2000
+            })
+          }
+        })
+      })
+    },
+    handleEnable(row, index) {
+      this.$confirm(this.$t('common.hint.confirm'), 'Hint', {
+        confirmButtonText: this.$t('common.button.submit'),
+        cancelButtonText: this.$t('common.button.cancel'),
+        type: 'warning'
+      }).then(() => {
+        enable(row.id).then(response => {
+          if (response.code === '00000') {
+            this.$notify({
+              title: 'Success',
+              message: response.message,
+              type: 'success',
+              duration: 2000
+            })
+            this.getList()
+          } else {
+            this.$notify({
+              title: 'Faile',
+              message: response.message,
+              type: 'faile',
+              duration: 2000
+            })
+          }
+        })
+      })
+    },
+    handleDisable(row, index) {
+      this.$confirm(this.$t('common.hint.confirm'), 'Hint', {
+        confirmButtonText: this.$t('common.button.submit'),
+        cancelButtonText: this.$t('common.button.cancel'),
+        type: 'warning'
+      }).then(() => {
+        disable(row.id).then(response => {
+          if (response.code === '00000') {
+            this.$notify({
+              title: 'Success',
+              message: response.message,
+              type: 'success',
+              duration: 2000
+            })
+            this.getList()
           } else {
             this.$notify({
               title: 'Faile',
@@ -344,17 +458,36 @@ export default {
           const listData = JSON.stringify(this.info)
           // console.log(listData)
           // tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-          update(listData).then(() => {
+          update(listData).then((response) => {
             const index = this.list.findIndex(v => v.id === this.info.id)
             this.list.splice(index, 1, this.info)
             this.dialogFormVisible = false
             this.$notify({
               title: 'Success',
-              message: '修改成功！',
+              message: response.message,
               type: 'success',
               duration: 2000
             })
             this.getList()
+          })
+        }
+      })
+    },
+    resetPassword() {
+      this.$refs['resetForm'].validate((valid) => {
+        if (valid) {
+          const origin = this.pwd.newPassword
+          this.pwd.newPassword = md5(origin)
+          const data = JSON.stringify(this.pwd)
+          this.pwd.newPassword = origin
+          resetPassword(data).then((response) => {
+            this.resetPasswordDialogVisible = false
+            this.$notify({
+              title: 'Success',
+              message: response.message,
+              type: 'success',
+              duration: 2000
+            })
           })
         }
       })

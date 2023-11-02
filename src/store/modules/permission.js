@@ -62,11 +62,11 @@ export function generateMenu(routes, data) {
         icon: item.icon
       }
     }
-    if(item.children && item.children.length > 0){
+    if (item.children && item.children.length > 0) {
       item.children.forEach(children => {
         const childMenu = {
           path: children.url ? children.url : '',
-          // component: (resolve) => require([`@/views${children.url}`], resolve),
+          component: (resolve) => require([`@/views${children.url}`], resolve),
           name: children.name,
           meta: {
             title: children.name,
@@ -80,38 +80,12 @@ export function generateMenu(routes, data) {
     // }
   })
 
-  const testmenu = {
-    path: '/Users',
-    component: Layout,
-    redirect: '',
-    children: [
-      {
-        path: '/UserList',
-        component: () => import('@/views/user/UserList'),
-        redirect: '',
-        children: [],
-        name: '用户管理',
-        meta: {
-          title: '用户管理',
-          icon: 'user'
-        }
-      }
-    ],
-    name: '系统管理',
-    meta: {
-      title: '系统管理',
-      icon: 'user'
-    }
-  }
-  routes.push(testmenu)
   const menu3 = {
     path: '*',
     redirect: '/404',
     hidden: true
   }
   routes.push(menu3)
-
-  
 }
 
 const actions = {
@@ -119,12 +93,6 @@ const actions = {
     return new Promise(resolve => {
       const menuData = []
       getMenus(state.token).then(response => {
-        if (response.code !== '00000') {
-          this.$message({
-            message: 'Error loading menu',
-            type: 0
-          })
-        }
         const data = response.data
         Object.assign(menuData, data)
         const tempAsyncRoutes = Object.assign([], asyncRoutes)
