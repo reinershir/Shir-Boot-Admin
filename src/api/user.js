@@ -92,3 +92,17 @@ export function resetPassword(data) {
     data
   })
 }
+
+export function getRoleByUser(userId) {
+  return request({
+    url: `/user/${userId}/roleIds`,
+    method: 'get'
+  })
+}
+
+export function roleList() {
+  return request({
+    url: '/roles/list',
+    method: 'get'
+  })
+}

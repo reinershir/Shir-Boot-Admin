@@ -119,7 +119,18 @@
           <el-input v-model="info.description" />
         </el-form-item>
         <el-form-item :label="$t('role.menu')">
-          <el-tree ref="tree" :check-strictly="checkStrictly" :data="menuData" :props="defaultProps" show-checkbox node-key="id" class="permission-tree" :default-checked-keys="defaultCheckedList"/>
+          <el-tree
+            ref="tree"
+            :data="menuData"
+            :props="defaultProps"
+            :check-strictly="true"
+            show-checkbox
+            node-key="id"
+            class="permission-tree"
+            :default-checked-keys="defaultCheckedList"
+            :default-expand-all="true"
+            @check="checkeTree"
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -171,7 +182,6 @@ export default {
       },
       dialogFormVisible: false,
       dialogVisible: false,
-      checkStrictly: false,
       resetPasswordDialogVisible: false,
       dialogStatus: '',
       textMap: {
@@ -197,6 +207,32 @@ export default {
     this.getList()
   },
   methods: {
+    deselectChild(keys, childNodes) {
+      for (var i = 0; i < childNodes.length; i++) {
+        const index = keys.indexOf(childNodes[i].data.id)
+        if (index > -1) {
+          keys.splice(index, 1)// 移除选中的子节点
+        }
+        if (childNodes[i].childNodes.length > 0) {
+          this.deselectChild(keys, childNodes[i].childNodes)
+        }
+      }
+    },
+    checkeTree(data) {
+      let thisNode = this.$refs.tree.getNode(data.id) // 获取当前节点
+      const keys = this.$refs.tree.getCheckedKeys() // 获取已勾选节点的key值
+      if (thisNode.checked) { // 当前节点若被选中
+        for (let i = thisNode.level; i > 1; i--) { // 判断是否有父级节点
+          if (!thisNode.parent.checked) { // 父级节点未被选中，则将父节点替换成当前节点，往上继续查询，并将此节点key存入keys数组
+            thisNode = thisNode.parent
+            keys.push(thisNode.data.id)
+          }
+        }
+      } else {
+        this.deselectChild(keys, thisNode.childNodes) // 如果是取消选中，反选所有子节点
+      }
+      this.$refs.tree.setCheckedKeys(keys) // 将所有keys数组的节点全选中
+    },
     getList() {
       this.listLoading = true
       fetchList(this.listQuery).then(response => {
@@ -238,21 +274,18 @@ export default {
       this.info = Object.assign({}, row) // copy obj
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
-      if(this.menuData === null){
+      if (this.menuData === null) {
         this.getMenus()
       }
       getRolePermissions(row.id).then(response => {
-        let selectedNodes = []
+        const selectedNodes = []
         response.data.forEach((item) => {
           selectedNodes.push(item.menuId)
         })
-        console.log(this.selectedNodes)
-        this.checkStrictly = true
         this.$nextTick(() => {
           this.defaultCheckedList = selectedNodes
           this.$refs.tree.setCheckedNodes(this.defaultCheckedList)
           // set checked state of a node not affects its father and child nodes
-          this.checkStrictly = false
           this.$refs['dataForm'].clearValidate()
         })
       })

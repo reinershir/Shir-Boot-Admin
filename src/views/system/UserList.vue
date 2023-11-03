@@ -146,45 +146,71 @@
     />
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
-      <el-form
-        ref="dataForm"
-        :rules="rules"
-        :model="info"
-        label-position="left"
-        label-width="150px"
-        style="width: 400px; margin-left:50px;"
-      >
-        <el-input v-show="false" v-model="info.id" />
-        <el-form-item prop="loginName" :label="$t('user.loginName')">
-          <el-input v-model="info.loginName" />
-        </el-form-item>
-        <el-form-item prop="nickName" :label="$t('user.nickName')">
-          <el-input v-model="info.nickName" />
-        </el-form-item>
-        <el-form-item :label="$t('user.profile')" prop="profile">
-          <el-input v-model="info.profile" />
-        </el-form-item>
-        <!--<el-form-item label="Status">
-          <el-select v-model="temp.status" class="filter-item" placeholder="Please select">
-            <el-option v-for="item in statusOptions" :key="item" :label="item" :value="item" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="Imp">
-          <el-rate v-model="temp.importance" :colors="['#99A9BF', '#F7BA2A', '#FF9900']" :max="3" style="margin-top:8px;" />
-        </el-form-item>-->
-        <el-form-item v-if="dialogStatus === 'create'" prop="password" :label="$t('user.password')">
-          <el-input v-model="info.password" type="password" placeholder="Please input Password" />
-        </el-form-item>
-        <el-form-item prop="email" :label="$t('user.email')">
-          <el-input v-model="info.email" />
-        </el-form-item>
-        <el-form-item prop="phoneNumber" :label="$t('user.phoneNumber')">
-          <el-input v-model="info.phoneNumber" />
-        </el-form-item>
-        <el-form-item prop="remark" :label="$t('user.remark')">
-          <el-input v-model="info.remark" />
-        </el-form-item>
-      </el-form>
+      <el-row>
+        <el-col :span='12'>
+          <el-form
+            ref="dataForm"
+            :rules="rules"
+            :model="info"
+            label-position="left"
+            label-width="150px"
+            style="margin-left:50px;"
+          >
+            <el-input v-show="false" v-model="info.id" />
+            <el-form-item prop="loginName" :label="$t('user.loginName')">
+              <el-input v-model="info.loginName" />
+            </el-form-item>
+            <el-form-item prop="nickName" :label="$t('user.nickName')">
+              <el-input v-model="info.nickName" />
+            </el-form-item>
+            <el-form-item :label="$t('user.profile')" prop="profile">
+              <el-input v-model="info.profile" />
+            </el-form-item>
+            <el-form-item v-if="dialogStatus === 'create'" prop="password" :label="$t('user.password')">
+              <el-input v-model="info.password" type="password" placeholder="Please input Password" />
+            </el-form-item>
+            <el-form-item prop="email" :label="$t('user.email')">
+              <el-input v-model="info.email" />
+            </el-form-item>
+            <el-form-item prop="phoneNumber" :label="$t('user.phoneNumber')">
+              <el-input v-model="info.phoneNumber" />
+            </el-form-item>
+            <el-form-item prop="remark" :label="$t('user.remark')">
+              <el-input v-model="info.remark" />
+            </el-form-item>
+          </el-form>
+        </el-col>
+        <el-col :span='12' style="padding-left:50px;padding-right:50px;">
+          <el-table ref="roleTable" v-loading="roles.roleListLoading" :data="roles.roleList" border highlight-current-row @selection-change="selectRole">
+            <el-table-column v-if="false" width="330px" align="center" label="id">
+              <template slot-scope="scope">
+                <span>{{ scope.row.id }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              type="selection"
+              width="55">
+            </el-table-column>
+            <el-table-column align="center" :label="$t('role.roleName')">
+              <template slot-scope="scope">
+                <span>{{ scope.row.roleName }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column align="center" :label="$t('role.description')">
+              <template slot-scope="scope">
+                <span>{{ scope.row.description }}</span>
+              </template>
+            </el-table-column>
+          </el-table>
+          <pagination
+            v-show="roles.total > 0"
+            :total="roles.total"
+            :page.sync="roles.page"
+            :limit.sync="roles.pageSize"
+            @pagination="getRoleList"
+          />
+        </el-col>
+      </el-row>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
           {{ $t('common.button.cancel') }}
@@ -225,7 +251,7 @@
 </template>
 
 <script>
-import { fetchList, create, update, deleteById, enable, disable, resetPassword } from '@/api/user'
+import { fetchList, create, update, deleteById, enable, disable, resetPassword, roleList, getRoleByUser } from '@/api/user'
 import Pagination from '@/components/Pagination' // Secondary package based on el-pagination
 import md5 from 'js-md5'
 
@@ -260,6 +286,13 @@ export default {
     }
     return {
       list: null,
+      roles: {
+        page: 1,
+        pageSize: 10,
+        roleList: null,
+        total: 0,
+        roleListLoading: true
+      },
       total: 0,
       listLoading: true,
       listQuery: {
@@ -284,6 +317,7 @@ export default {
         phoneNumber: '',
         email: '',
         remark: '',
+        roleIds: [],
         status: 0
       },
       pwd: {
@@ -302,6 +336,7 @@ export default {
   },
   created() {
     this.getList()
+    this.getRoleList()
   },
   methods: {
     getList() {
@@ -326,13 +361,28 @@ export default {
         remark: '',
         status: 0
       }
-      this.imgFiles = []
+    },
+    selectRole(selection) {
+      this.info.roleIds = []
+      for (var i = 0; i < selection.length; i++) {
+        this.info.roleIds.push(selection[i].id)
+      }
+    },
+    getRoleList() {
+      this.roles.roleListLoading = true
+      if (this.roles.roleList === null) {
+        roleList().then(response => {
+          this.roles.roleList = response.data.records
+          this.roles.total = response.data.total
+          this.roles.roleListLoading = false
+        })
+      }
     },
     handleCreate() {
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
-      // this.rules.password = [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }]
       this.$nextTick(() => {
+        this.$refs['roleTable'].clearSelection()
         this.$refs['dataForm'].clearValidate()
       })
       this.resetTemp()
@@ -342,8 +392,14 @@ export default {
       this.dialogStatus = 'update'
       this.dialogFormVisible = true
       this.showPassword = false
-      this.$nextTick(() => {
-        this.$refs['dataForm'].clearValidate()
+      getRoleByUser(row.id).then(response => {
+        this.$nextTick(() => {
+          this.roles.roleList.forEach(roleRow => {
+            var index = response.data.indexOf(roleRow.id)
+            this.$refs['roleTable'].toggleRowSelection(roleRow, index !== -1)
+          })
+          this.$refs['dataForm'].clearValidate()
+        })
       })
     },
     handleResetPassword(row) {
@@ -360,22 +416,13 @@ export default {
         type: 'warning'
       }).then(() => {
         deleteById(row.id).then(response => {
-          if (response.code === '00000') {
-            this.$notify({
-              title: 'Success',
-              message: response.message,
-              type: 'success',
-              duration: 2000
-            })
-            this.list.splice(index, 1)
-          } else {
-            this.$notify({
-              title: 'Faile',
-              message: response.message,
-              type: 'faile',
-              duration: 2000
-            })
-          }
+          this.$notify({
+            title: 'Success',
+            message: response.message,
+            type: 'success',
+            duration: 2000
+          })
+          this.list.splice(index, 1)
         })
       })
     },
@@ -386,22 +433,13 @@ export default {
         type: 'warning'
       }).then(() => {
         enable(row.id).then(response => {
-          if (response.code === '00000') {
-            this.$notify({
-              title: 'Success',
-              message: response.message,
-              type: 'success',
-              duration: 2000
-            })
-            this.getList()
-          } else {
-            this.$notify({
-              title: 'Faile',
-              message: response.message,
-              type: 'faile',
-              duration: 2000
-            })
-          }
+          this.$notify({
+            title: 'Success',
+            message: response.message,
+            type: 'success',
+            duration: 2000
+          })
+          this.getList()
         })
       })
     },
@@ -412,22 +450,13 @@ export default {
         type: 'warning'
       }).then(() => {
         disable(row.id).then(response => {
-          if (response.code === '00000') {
-            this.$notify({
-              title: 'Success',
-              message: response.message,
-              type: 'success',
-              duration: 2000
-            })
-            this.getList()
-          } else {
-            this.$notify({
-              title: 'Faile',
-              message: response.message,
-              type: 'faile',
-              duration: 2000
-            })
-          }
+          this.$notify({
+            title: 'Success',
+            message: response.message,
+            type: 'success',
+            duration: 2000
+          })
+          this.getList()
         })
       })
     },
