@@ -214,6 +214,17 @@ export default {
     position: '位置',
     selectCell: 'Please select a row'
   },
+  codegenerate: {
+    tableName: '表名',
+    columnName: '列名',
+    comment: '列描述',
+    javaType: '字段类型',
+    name: '实体类字段名',
+    defaultValue: '默认值',
+    isPrimaryKey: '是否是主键',
+    isNull: '是否可为空',
+    select: '请选择查询条件'
+  },
   common: {
     status: {
       disable: '禁用',

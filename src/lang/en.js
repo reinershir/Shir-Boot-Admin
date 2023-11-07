@@ -212,6 +212,17 @@ export default {
     lastChild: 'last of the target children',
     position: 'position'
   },
+  codegenerate: {
+    tableName: 'Table name',
+    columnName: 'column name',
+    comment: 'comment',
+    javaType: 'field type',
+    name: 'field name',
+    defaultValue: 'default value',
+    isPrimaryKey: 'is primary key',
+    isNull: 'is null',
+    select: 'Please select the search criteria'
+  },
   common: {
     label: {
       createDate: 'create date',
