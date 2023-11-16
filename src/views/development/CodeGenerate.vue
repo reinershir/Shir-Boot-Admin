@@ -5,6 +5,9 @@
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         {{ $t("common.button.search") }}
       </el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-edit" :disabled="list === null || list.length<1" @click="getStart">
+        {{ $t("codegenerate.getStart") }}
+      </el-button>
       <br>
     </div>
     <el-table v-loading="listLoading" :data="list" border fit highlight-current-row style="width: 100%">
@@ -50,9 +53,9 @@
         </template>
       </el-table-column>
 
-      <el-table-column align="center" :label="$t('common.button.operation')" lign="center" width="260" class-name="small-padding fixed-width">
-        <template>
-          <el-select v-model="operation" clearable :placeholder="$t('codegenerate.select')">
+      <el-table-column align="center" :label="$t('codegenerate.queryOperation')" lign="center" width="260" class-name="small-padding fixed-width">
+        <template slot-scope="scope">
+          <el-select :v-model="scope.row.queryType" clearable :placeholder="$t('codegenerate.select')">
             <el-option
               v-for="item in options"
               :key="item.value"
@@ -63,11 +66,35 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-dialog :visible.sync="dialogVisible" :title="$t('codegenerate.getStart')" :rules="rules">
+      <el-form :model="info" ref="dataForm" :rules="rules" label-width="180px" label-position="left">
+        <el-form-item :label="$t('codegenerate.tableName')" prop="tableName">
+          <el-input v-model="info.tableName" :placeholder="$t('codegenerate.tableName')" />
+        </el-form-item>
+        <el-form-item :label="$t('codegenerate.name')" prop="modelName">
+          <el-input v-model="info.modelName" :placeholder="$t('codegenerate.name')" />
+        </el-form-item>
+        <el-form-item :label="$t('codegenerate.packageName')" prop="packageName">
+          <el-input v-model="info.packageName" :placeholder="$t('codegenerate.packageName')" />
+        </el-form-item>
+        <el-form-item :label="$t('codegenerate.modelDescription')" prop="modelDescription">
+          <el-input v-model="info.modelDescription" :placeholder="$t('codegenerate.modelDescription')" />
+        </el-form-item>
+      </el-form>
+      <div style="text-align:right;">
+        <el-button type="danger" @click="dialogVisible=false">
+          {{ $t('permission.cancel') }}
+        </el-button>
+        <el-button type="primary" @click="generate">
+          {{ $t('permission.confirm') }}
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getColumnsByTableName } from '@/api/development'
+import { getColumnsByTableName, generateAndDownload } from '@/api/development'
 
 export default {
   name: 'CodeGanerate',
@@ -85,7 +112,21 @@ export default {
   data() {
     return {
       list: null,
+      info: {
+        tableName: '',
+        pakageName: '',
+        modelDescription: '',
+        modelName: ''
+      },
+      queryType: null,
       listLoading: false,
+      dialogVisible: false,
+      rules: {
+        tableName: [{ required: true, message: this.$t('common.hint.input') + this.$t('codegenerate.tableName') }],
+        modelName: [{ required: true, message: this.$t('common.hint.input') + this.$t('codegenerate.name') }],
+        packageName: [{ required: true, message: this.$t('common.hint.input') + this.$t('codegenerate.packageName') }],
+        modelDescription: [{ required: true, message: this.$t('common.hint.input') + this.$t('codegenerate.modelDescription') }]
+      },
       tableName: '',
       options: [
         {
@@ -93,12 +134,12 @@ export default {
           label: '='
         },
         {
-          value: '>',
-          label: '>'
+          value: '>=',
+          label: '>='
         },
         {
-          value: '<',
-          label: '<'
+          value: '<=',
+          label: '<='
         },
         {
           value: 'likeLeft',
@@ -130,6 +171,35 @@ export default {
       getColumnsByTableName(this.tableName).then(response => {
         this.list = response.data
         this.listLoading = false
+      })
+    },
+    getStart() {
+      this.dialogVisible = true
+    },
+    generate() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const requestData = this.info
+          // requestData.fieldInfos = this.list
+          generateAndDownload(requestData).then((response) => {
+            this.dialogVisible = false
+            this.$notify({
+              title: 'Success',
+              message: this.$t('common.hint.success'),
+              type: 'success',
+              duration: 2000
+            })
+            console.log(response)
+            var blob = new Blob([response.data], {
+              type: 'application/file'
+            })
+            var url = window.URL.createObjectURL(blob)
+            var a = document.createElement('a')
+            a.href = url
+            a.download = 'codes.zip'
+            a.click()
+          })
+        }
       })
     },
     handleFilter() {

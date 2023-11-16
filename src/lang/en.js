@@ -221,7 +221,11 @@ export default {
     defaultValue: 'default value',
     isPrimaryKey: 'is primary key',
     isNull: 'is null',
-    select: 'Please select the search criteria'
+    select: 'Please select the search criteria',
+    getStart: 'get start',
+    packageName: 'package name',
+    modelDescription: 'model description',
+    queryOperation: 'query operation'
   },
   common: {
     label: {

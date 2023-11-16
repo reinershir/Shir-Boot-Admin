@@ -223,7 +223,11 @@ export default {
     defaultValue: '默认值',
     isPrimaryKey: '是否是主键',
     isNull: '是否可为空',
-    select: '请选择查询条件'
+    select: '请选择查询条件',
+    getStart: '开始生成',
+    packageName: '包名',
+    modelDescription: '实体类描述',
+    queryOperation: '查询操作'
   },
   common: {
     status: {
