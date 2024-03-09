@@ -52,7 +52,7 @@ export function generateMenu(routes, data) {
   data.forEach(item => {
     // if (item.url != '') {
     const menu = {
-      path: item.url ? item.url : '',
+      path: item.url ? item.url : item.name,
       component: Layout,
       redirect: '',
       children: [],
@@ -65,7 +65,7 @@ export function generateMenu(routes, data) {
     if (item.children && item.children.length > 0) {
       item.children.forEach(children => {
         const childMenu = {
-          path: children.url ? children.url : '',
+          path: children.url ? children.url : item.name,
           component: (resolve) => require([`@/views${children.url}`], resolve),
           name: children.name,
           meta: {
@@ -98,8 +98,7 @@ const actions = {
         const tempAsyncRoutes = Object.assign([], asyncRoutes)
         generateMenu(tempAsyncRoutes, menuData)
         console.log(tempAsyncRoutes)
-        let accessedRoutes
-        accessedRoutes = tempAsyncRoutes || []
+        const accessedRoutes = tempAsyncRoutes || []
         commit('SET_ROUTES', accessedRoutes)
         resolve(accessedRoutes)
       })

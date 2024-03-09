@@ -279,12 +279,12 @@ export default {
       this.selectedMoveMenu.targetMenuId = null
     },
     moveMenu() {
-      if(this.selectedMoveMenu.targetMenuId == null){
+      if (this.selectedMoveMenu.targetMenuId == null ) {
         this.$notify({
-            title: 'faile',
-            message: this.$t('menu.selectCell'),
-            type: 'faile',
-            duration: 2000
+          title: 'faile',
+          message: this.$t('menu.selectCell'),
+          type: 'faile',
+          duration: 2000
         })
         return
       }

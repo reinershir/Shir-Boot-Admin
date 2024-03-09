@@ -10,8 +10,7 @@
       </el-button>
       <br>
     </div>
-    <el-table v-loading="listLoading" :data="list" border fit highlight-current-row style="width: 100%">
-
+    <el-table v-loading="listLoading" :data="list" border fit highlight-current-row style="width: 100%" >
       <el-table-column align="center" :label="$t('codegenerate.name')">
         <template slot-scope="scope">
           <span>{{ scope.row.name }}</span>
@@ -49,20 +48,25 @@
 
       <el-table-column align="center" :label="$t('codegenerate.comment')">
         <template slot-scope="scope">
-          <span>{{ scope.row.comment }}</span>
+          <span>
+            <el-input v-model="scope.row.comment" :value="scope.row.comment" size="small" style="width:100%" />
+          </span>
+          <!-- <span>{{ scope.row.comment }}</span> -->
         </template>
       </el-table-column>
 
       <el-table-column align="center" :label="$t('codegenerate.queryOperation')" lign="center" width="260" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-select :v-model="scope.row.queryType" clearable :placeholder="$t('codegenerate.select')">
-            <el-option
-              v-for="item in options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value">
-            </el-option>
-          </el-select>
+          <span>
+            <el-select v-model="scope.row.operation" clearable :placeholder="$t('codegenerate.select')">
+              <el-option
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value">
+              </el-option>
+            </el-select>
+          </span>
         </template>
       </el-table-column>
     </el-table>
@@ -116,6 +120,7 @@ export default {
         tableName: '',
         pakageName: '',
         modelDescription: '',
+        fieldInfos: [],
         modelName: ''
       },
       queryType: null,
@@ -134,6 +139,14 @@ export default {
           label: '='
         },
         {
+          value: '>',
+          label: '>'
+        },
+        {
+          value: '<',
+          label: '<'
+        },
+        {
           value: '>=',
           label: '>='
         },
@@ -142,16 +155,28 @@ export default {
           label: '<='
         },
         {
-          value: 'likeLeft',
+          value: 'like_left',
           label: 'likeLeft'
         },
         {
-          value: 'likeRight',
+          value: 'like_right',
           label: 'likeRight'
         },
         {
           value: 'like',
           label: 'like'
+        },
+        {
+          value: 'not_empty',
+          label: 'not_empty'
+        },
+        {
+          value: 'is_null',
+          label: 'is_null'
+        },
+        {
+          value: 'hidden',
+          label: 'hidden'
         }
       ]
     }
@@ -170,6 +195,7 @@ export default {
       this.listLoading = true
       getColumnsByTableName(this.tableName).then(response => {
         this.list = response.data
+        this.info.tableName = this.tableName
         this.listLoading = false
       })
     },
@@ -180,7 +206,7 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           const requestData = this.info
-          // requestData.fieldInfos = this.list
+          requestData.fieldInfos = this.list
           generateAndDownload(requestData).then((response) => {
             this.dialogVisible = false
             this.$notify({
