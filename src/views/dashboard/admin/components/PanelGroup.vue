@@ -7,9 +7,9 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            New Visits
+            今日Token用量
           </div>
-          <count-to :start-val="0" :end-val="102400" :duration="2600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="todayUsage" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -20,9 +20,9 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Messages
+            Token总用量
           </div>
-          <count-to :start-val="0" :end-val="81212" :duration="3000" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="total" :duration="3000" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -33,9 +33,9 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Purchases
+            今日消耗金额（美元）
           </div>
-          <count-to :start-val="0" :end-val="9280" :duration="3200" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="money" :duration="3200" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -46,9 +46,9 @@
         </div>
         <div class="card-panel-description">
           <div class="card-panel-text">
-            Shoppings
+            今日对话次数
           </div>
-          <count-to :start-val="0" :end-val="13600" :duration="3600" class="card-panel-num" />
+          <count-to :start-val="0" :end-val="count" :duration="3600" class="card-panel-num" />
         </div>
       </div>
     </el-col>
@@ -57,10 +57,32 @@
 
 <script>
 import CountTo from 'vue-count-to'
+import { getChatCount, getTodayCount, getTotalUsage } from '@/api/dashboard'
 
 export default {
   components: {
     CountTo
+  },
+  data() {
+    return {
+      count: 0,
+      todayUsage: 0,
+      total: 0,
+      money: 0
+    }
+  },
+  created() {
+    getChatCount().then(res => {
+      this.count = res.data
+    })
+    getTodayCount().then(res => {
+      this.todayUsage = res.data
+      this.money = res.data / 1000 * 0.002
+      
+    })
+    getTotalUsage().then(res => {
+      this.total = res.data
+    })
   },
   methods: {
     handleSetLineChartData(type) {

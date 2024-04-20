@@ -36,20 +36,43 @@
               {{ $t('navbar.dashboard') }}
             </el-dropdown-item>
           </router-link>
-          <a target="_blank" href="https://github.com/PanJiaChen/vue-element-admin/">
-            <el-dropdown-item>
-              {{ $t('navbar.github') }}
-            </el-dropdown-item>
-          </a>
-          <a target="_blank" href="https://panjiachen.github.io/vue-element-admin-site/#/">
-            <el-dropdown-item>Docs</el-dropdown-item>
-          </a>
+          <el-dropdown-item divided @click.native="handleUpdatePassword">
+            <span style="display:block;">{{ $t('navbar.updatePassword') }}</span>
+          </el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">
             <span style="display:block;">{{ $t('navbar.logOut') }}</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>
     </div>
+    <el-dialog :title="$t('navbar.updatePassword')" :visible.sync="dialogFormVisible">
+      <el-form
+        ref="dataForm"
+        :model="updatePasswordInfo"
+        :rules="rules"
+        label-position="left"
+        label-width="150px"
+        style="margin-left:50px;"
+      >
+        <el-form-item prop="password" :label="$t('user.oldPassword')">
+          <el-input v-model="updatePasswordInfo.password" />
+        </el-form-item>
+        <el-form-item prop="newPassword" :label="$t('user.newPassword')">
+          <el-input v-model="updatePasswordInfo.newPassword" />
+        </el-form-item>
+        <el-form-item prop="requiredPassword" :label="$t('user.requirePassword')">
+          <el-input v-model="updatePasswordInfo.requiredPassword" />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">
+          {{ $t('common.button.cancel') }}
+        </el-button>
+        <el-button type="primary" @click="submitUpdatePassword">
+          {{ $t('common.button.save') }}
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -62,8 +85,30 @@ import Screenfull from '@/components/Screenfull'
 import SizeSelect from '@/components/SizeSelect'
 import LangSelect from '@/components/LangSelect'
 import Search from '@/components/HeaderSearch'
+import { updatePassword } from '@/api/user'
+import md5 from 'js-md5'
 
 export default {
+  data() {
+    const validatePassword = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error(this.$t('user.requirePassword')))
+      } else if (value !== this.updatePasswordInfo.newPassword) {
+        callback(new Error(this.$t('user.unmatchPassword')))
+      } else {
+        callback()
+      }
+    }
+    return {
+      dialogFormVisible: false,
+      updatePasswordInfo: {},
+      rules: {
+	      password: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }],
+        newPassword: [{ required: true, message: this.$t('common.hint.input') + this.$t('user.password'), min: 6, max: 16, trigger: 'change' }],
+        requiredPassword: [{ required: true, validator: validatePassword, trigger: 'blue' }]
+      }
+    }
+  },
   components: {
     Breadcrumb,
     Hamburger,
@@ -87,6 +132,36 @@ export default {
     async logout() {
       await this.$store.dispatch('user/logout')
       this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+    },
+    handleUpdatePassword() {
+      this.dialogFormVisible = true
+      this.$nextTick(() => {
+        this.$refs['dataForm'].clearValidate()
+      })
+      this.updatePasswordInfo = {}
+    },
+    submitUpdatePassword() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          const tempData = {}
+          tempData.password = md5(this.updatePasswordInfo.password)
+          tempData.newPassword = md5(this.updatePasswordInfo.newPassword)
+          updatePassword(tempData).then(response => {
+            this.$message({
+              message: response.message,
+              type: 'success'
+            })
+            this.dialogFormVisible = false
+          })
+        }
+      })
+    },
+    createData() {
+      this.$refs['dataForm'].validate((valid) => {
+        if (valid) {
+          this.updatePassword()
+        }
+      })
     }
   }
 }

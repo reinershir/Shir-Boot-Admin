@@ -66,7 +66,7 @@ export default {
   },
   navbar: {
     dashboard: 'Dashboard',
-    github: 'Github',
+    updatePassword: 'Update password',
     logOut: 'Log Out',
     profile: 'Profile',
     theme: 'Theme',
@@ -185,6 +185,8 @@ export default {
     password: 'password',
     requirePassword: 'Please enter the confirmation password',
     unmatchPassword: 'The password is inconsistent',
+    newPassword: 'new password',
+    oldPassword: 'old password',
     hint: {
       nickName: 'Please enter your nickname',
       email: 'Please enter your email',
@@ -226,6 +228,9 @@ export default {
     packageName: 'package name',
     modelDescription: 'model description',
     queryOperation: 'query operation'
+  },
+  dictionary: {
+    name: 'dictionary name',
   },
   common: {
     label: {

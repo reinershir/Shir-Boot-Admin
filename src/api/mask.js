@@ -1,15 +1,8 @@
 import request from '@/utils/request'
 
-export function getRoutes() {
-  return request({
-    url: '/vue-element-admin/routes',
-    method: 'get'
-  })
-}
-
 export function fetchList(data) {
   return request({
-    url: '/roles/list',
+    url: '/mask',
     method: 'get',
     params: data
   })
@@ -17,7 +10,7 @@ export function fetchList(data) {
 
 export function create(data) {
   return request({
-    url: '/roles',
+    url: '/mask',
     method: 'post',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
@@ -28,7 +21,7 @@ export function create(data) {
 
 export function update(data) {
   return request({
-    url: `/roles`,
+    url: '/mask',
     method: 'put',
     headers: {
       'Content-Type': 'application/json;charset=UTF-8'
@@ -37,23 +30,9 @@ export function update(data) {
   })
 }
 
-export function deleteById(id) {
+export function deleteById(data) {
   return request({
-    url: `/roles/${id}`,
+    url: '/mask/' + data,
     method: 'delete'
-  })
-}
-
-export function getMenuList() {
-  return request({
-    url: '/menus/list',
-    method: 'get'
-  })
-}
-
-export function getRolePermissions(data) {
-  return request({
-    url: `/roles/${data}/rolePermissions`,
-    method: 'get'
   })
 }

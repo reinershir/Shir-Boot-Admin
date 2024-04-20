@@ -7,6 +7,11 @@
     <div ref="rightPanel" style="width:25%;float:left;border: 1px solid black;height:550px;border-radius: 15px;">
       <div class="tab-container">
         <el-tabs v-model="activeName" style="margin-top:15px;" type="border-card">
+          <el-tab-pane label="Common" name="COMMON">
+            <el-alert
+              title="This option is a general AI conversation, which will use search engines such as Google and Bing to answer your questions depending on the situation."
+              type="success"/>
+          </el-tab-pane>
           <el-tab-pane label="Chat PDF" name="PDF">
             <el-upload
               class="filter-item"
@@ -79,11 +84,12 @@ export default {
       selectModel: '',
       modelList: [],
       tabMapOptions: [
+        { label: 'Common', key: 'COMMON' },
         { label: 'Chat PDF', key: 'PDF' },
         { label: 'Chat Web', key: 'WEB' },
         { label: 'Chat Python', key: 'Python' }
       ],
-      activeName: 'PDF',
+      activeName: 'COMMON',
       uploadUrl: process.env.VUE_APP_BASE_API+'files/upload',
       multiplyUploadUrl: process.env.VUE_APP_BASE_API+'files/upload/multiply',
       currentFilePath: '',
@@ -112,9 +118,10 @@ export default {
   },
   methods: {
     submitQuestion() {
-      const es = new EventSourcePolyfill("http://localhost:9960/stream?userId=testUser&dataType=" + this.activeName + "&projectId=1001&question=" + this.question + "&path=" + this.currentFilePath,
+      const es = new EventSourcePolyfill(process.env.VUE_APP_PYTHON_API+"stream?userId=testUser&dataType=" + this.activeName + "&projectId=1001&question=" + this.question + "&path=" + this.currentFilePath,
       {
-        heartbeatTimeout: 120000
+        heartbeatTimeout: 120000,
+        openWhenHidden: true
         // headers: { 
         //   'Access-Token': getToken() 
         // },
@@ -129,6 +136,7 @@ export default {
           console.log(response)
           if(response.content === '[DONE]') {
             this.content = this.content + `</p>`
+            es.close()
           }else if(response.content){
             this.content = this.content + response.content
             // this.$refs.markdownIt.scrollTop = this.$refs.markdownIt.scrollHeight

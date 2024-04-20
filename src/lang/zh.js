@@ -66,7 +66,7 @@ export default {
   },
   navbar: {
     dashboard: '首页',
-    github: '项目地址',
+    updatePassword: '修改密码',
     logOut: '退出登录',
     profile: '个人中心',
     theme: '换肤',
@@ -185,6 +185,8 @@ export default {
     password: '密码',
     requirePassword: '请输入确认密码',
     unmatchPassword: '两次输入密码不一致',
+    newPassword: '新密码',
+    oldPassword: '原密码',
     hint: {
       nickName: '请输入用户名称',
       loginName: '请输入登陆名',
@@ -228,6 +230,9 @@ export default {
     packageName: '包名',
     modelDescription: '实体类描述',
     queryOperation: '查询操作'
+  },
+  dictionary: {
+    name: '字典名',
   },
   common: {
     status: {

@@ -35,7 +35,7 @@ export function fetchList(data) {
   return request({
     url: '/user/list',
     method: 'get',
-    data
+    params: data
   })
 }
 
@@ -104,5 +104,16 @@ export function roleList() {
   return request({
     url: '/roles/list',
     method: 'get'
+  })
+}
+
+export function updatePassword(data) {
+  return request({
+    url: '/user/password',
+    method: 'patch',
+    headers: {
+      'Content-Type': 'application/json;charset=UTF-8'
+    },
+    data
   })
 }
