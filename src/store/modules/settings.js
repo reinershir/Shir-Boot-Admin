@@ -1,10 +1,15 @@
-import variables from '@/styles/element-variables.scss'
+/*
+ * @Author: LaurenBerrys && 949154547@qq.com
+ * @Date: 2024-04-20 20:36:06
+ * @LastEditTime: 2024-04-24 10:11:53
+ * @Description:
+ */
 import defaultSettings from '@/settings'
 
 const { showSettings, tagsView, fixedHeader, sidebarLogo, supportPinyinSearch } = defaultSettings
 
 const state = {
-  theme: variables.theme,
+  theme: '#BFEBEA',
   showSettings,
   tagsView,
   fixedHeader,
