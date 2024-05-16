@@ -4,7 +4,8 @@ import { getLanguage } from '@/lang/index'
 const state = {
   sidebar: {
     opened: Cookies.get('sidebarStatus') ? !!+Cookies.get('sidebarStatus') : true,
-    withoutAnimation: false
+    withoutAnimation: false,
+    opened: false
   },
   device: 'desktop',
   language: getLanguage(),

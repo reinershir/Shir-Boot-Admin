@@ -77,7 +77,7 @@
           <el-input v-model="info.name" />
         </el-form-item>
         <el-form-item prop="code" label="Code">
-          <el-input v-model="info.code" />
+          <el-input v-model="info.code" :disabled="info.type === 'SYSTEM'"/>
         </el-form-item>
         <el-form-item prop="value" label="Value">
           <el-input v-model="info.value" />

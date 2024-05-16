@@ -26,11 +26,11 @@
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
-          <router-link to="/profile/index">
+          <!-- <router-link to="/profile/index">
             <el-dropdown-item>
               {{ $t('navbar.profile') }}
             </el-dropdown-item>
-          </router-link>
+          </router-link> -->
           <router-link to="/">
             <el-dropdown-item>
               {{ $t('navbar.dashboard') }}
@@ -89,6 +89,15 @@ import { updatePassword } from '@/api/user'
 import md5 from 'js-md5'
 
 export default {
+  components: {
+    Breadcrumb,
+    Hamburger,
+    ErrorLog,
+    Screenfull,
+    SizeSelect,
+    LangSelect,
+    Search
+  },
   data() {
     const validatePassword = (rule, value, callback) => {
       if (value === '') {
@@ -108,15 +117,6 @@ export default {
         requiredPassword: [{ required: true, validator: validatePassword, trigger: 'blue' }]
       }
     }
-  },
-  components: {
-    Breadcrumb,
-    Hamburger,
-    ErrorLog,
-    Screenfull,
-    SizeSelect,
-    LangSelect,
-    Search
   },
   computed: {
     ...mapGetters([

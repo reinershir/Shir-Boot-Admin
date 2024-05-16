@@ -7,10 +7,7 @@
       >
         <div class="app-container-left-title">
           <span>Chat-gpt</span>
-          <img
-            src="@/assets/gpt.png"
-            class="user-avatar"
-          >
+          <img src="@/assets/gpt.png" class="user-avatar" />
         </div>
         <span class="app-container-left-desc">打造你自己的人工智能助手</span>
         <div class="app-container-left-line">
@@ -18,10 +15,7 @@
             style="padding: 5px 30px; border-radius: 15px"
             @click="state = true"
           >
-            <img
-              src="@/assets/mark.png"
-              style="width: 20px"
-            >
+            <img src="@/assets/mark.png" style="width: 20px" />
             面具
           </el-button>
         </div>
@@ -37,54 +31,37 @@
             @click="handleGetHistory(item)"
           >
             {{ item.name }}
-            <div
-              class="delete-mask"
-              @click="handleDelete(item)"
-            >
+            <div class="delete-mask" @click="handleDelete(item)">
               <i class="el-icon-close" />
+            </div>
+            <div class="rename-chat" @click="handleRename(item)">
+              <i class="el-icon-edit" />
             </div>
           </div>
         </div>
         <div class="app-container-left-footer">
-          <el-button @click="handleAdd">
-            新的聊天
-          </el-button>
+          <el-button @click="handleAdd"> 新的聊天 </el-button>
         </div>
       </div>
-      <div
-        v-if="state"
-        class="app-container-right"
-      >
+      <div v-if="state" class="app-container-right">
         <div class="app-container-right-box">
           <div
-            v-for="item,index in mask"
+            v-for="(item, index) in mask"
             :key="index"
             style="margin-right: 30px"
           >
-            <div
-              class="mask"
-              @click="handleSetModel(item)"
-            >
+            <div class="mask" @click="handleSetModel(item)">
               {{ item.maskName }}
             </div>
           </div>
         </div>
       </div>
-      <div
-        v-else
-        class="app-container-right"
-      >
+      <div v-else class="app-container-right">
         <div class="app-container-right-title">
           <span>{{ defaults.name }}</span>
         </div>
-        <div
-          v-loading="loading"
-          class="app-container-right-content"
-        >
-          <div
-            v-if="Message.length > 0 && pageNo > 1"
-            class="loading"
-          >
+        <div v-loading="loading" class="app-container-right-content">
+          <div v-if="Message.length > 0 && pageNo > 1" class="loading">
             <el-tag
               type="info"
               style="cursor: pointer; margin-top: 5px"
@@ -113,24 +90,18 @@
                   <img
                     :src="avatar + '?imageView2/1/w/80/h/80'"
                     class="user-avatar"
-                  >
+                  />
                 </div>
                 <div style="display: flex; align-items: center">
                   {{ item.content }}
                 </div>
               </div>
             </div>
-            <div
-              v-else
-              class="app-container-right-item-assistant"
-            >
+            <div v-else class="app-container-right-item-assistant">
               <div>
-                <img
-                  src="@/assets/gpt.png"
-                  class="user-avatar"
-                >
+                <img src="@/assets/gpt.png" class="user-avatar" />
               </div>
-              <div :id="'chat-' + index" />
+              <div :id="'chat-' + index" style="margin-top: 10px;" />
             </div>
           </div>
         </div>
@@ -145,16 +116,9 @@
                 是否开启上下文
                 <el-switch v-model="contextState" />
               </template>
-              <el-button
-                icon="el-icon-reading"
-                circle
-              />
+              <el-button icon="el-icon-reading" circle />
             </el-tooltip>
-            <el-button
-              icon="el-icon-s-tools"
-              circle
-              @click="handleSetting"
-            />
+            <el-button icon="el-icon-s-tools" circle @click="handleSetting" />
           </div>
           <div class="app-container-right-footer-input">
             <el-input
@@ -165,26 +129,18 @@
               placeholder="请输入内容"
             />
             <div class="app-container-right-footer-btn">
-              <el-button
-                type="primary"
-                @click="handleSend"
-              >
-                发送
-              </el-button>
+              <el-button type="primary" @click="handleSend"> 发送 </el-button>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <el-dialog
-      title="设置"
-      :visible.sync="visible"
-    >
+    <el-dialog title="设置" :visible.sync="visible">
       <div class="app-dialog">
         <div class="app-dialog-item">
           <div>模型</div>
           <div>
-            <el-select v-model="models">
+            <el-select v-model="models" @change="handleCommand" >
               <el-option
                 v-for="item in options"
                 :key="item.id"
@@ -196,266 +152,335 @@
         </div>
       </div>
     </el-dialog>
+
+    <el-dialog title="重命名" :visible.sync="renameVisible">
+      <el-input v-model="renameName" />
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="renameVisible = false">取 消</el-button>
+        <el-button type="primary" @click="Rename">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { chat, getModelList } from '@/api/chatgpt'
-import { fetchList } from '@/api/mask'
-import { fetchList as fetchUserList } from '@/api/chat-history'
-import SSE from './sse'
-import { v4 as uuidv4 } from 'uuid'
-import { mapGetters } from 'vuex'
-const uuid = uuidv4()
+import { chat, getModelList } from "@/api/chatgpt";
+import { fetchList } from "@/api/mask";
+import { fetchList as fetchUserList } from "@/api/chat-history";
+import SSE from "./sse";
+import { v4 as uuidv4 } from "uuid";
+import { mapGetters } from "vuex";
+const uuid = uuidv4();
 export default {
+  name: 'chatGPT',
   data() {
     return {
       visible: false,
       contextState: true,
+      connectFlag: false,
+      renameVisible: false,
       loading: false,
-      model: { maskName: '' },
+      renameName: "",
+      selectMask: { prompt: "", maskName: ""},
       mask: [],
       info: [
         {
           uuid: uuid,
-          name: '新的聊天',
-          mask: '',
-          model: '',
-          content: ''
-        }
+          name: "新的聊天",
+          mask: "",
+          model: "",
+          content: "",
+        },
       ],
       defaults: {
         uuid: uuid,
-        name: '新的聊天',
-        model: '',
-        content: '',
-        mask: ''
+        name: "新的聊天",
+        model: "",
+        content: "",
+        mask: "",
       },
       Message: [],
-      question: '',
-      sessionId: '',
+      question: "",
+      sessionId: "",
       pageNo: 1,
       state: false,
-      models: 'gpt-3.5-turbo',
-      options: []
-    }
+      models: "gpt-3.5-turbo",
+      options: [],
+      currentItemUuid: "",
+    };
   },
   computed: {
-    ...mapGetters(['avatar'])
+    ...mapGetters(["avatar"]),
   },
   mounted() {
-    this.init()
+    this.init();
   },
   methods: {
     handleDelete(item) {
-      this.info = this.info.filter((i) => i.uuid !== item.uuid)
-      localStorage.setItem('uuInfo', JSON.stringify(this.info))
+      this.info = this.info.filter((i) => i.uuid !== item.uuid);
+      localStorage.setItem("uuInfo", JSON.stringify(this.info));
     },
     handleSetting() {
-      this.visible = true
+      this.visible = true;
+    },
+    handleRename(item){
+      this.renameVisible = true;
+      this.renameName = item.name;
+    },
+    Rename() {
+      const currentItem =  this.info.find(v => this.currentItemUuid === v.uuid );
+      if (currentItem) {
+        currentItem.name = this.renameName;
+        localStorage.setItem("uuInfo", JSON.stringify(this.info));
+      }
+      this.renameVisible = false;
     },
     handleCommand(mod) {
-      console.log(mod, 'mod')
-      this.models = mod
+      this.models = mod;
+      const currentItem =  this.info.find(v => this.currentItemUuid === v.uuid );
+      if (currentItem) {
+        currentItem.model = mod;
+        localStorage.setItem("uuInfo", JSON.stringify(this.info));
+      }
+      
     },
     printText(dom, content, speed = 50) {
-      let index = 0
-      this.setCursorStatus(dom, 'typing')
-      const printInterval = setInterval(() => {
-        dom.innerText += content[index]
-        index++
+      if (speed<10) {
+        dom.innerText += content
         const appContainerRightContent = document.querySelector(
-          '.app-container-right-content'
-        )
-        appContainerRightContent.scrollTop =
-          appContainerRightContent.scrollHeight
-        if (index >= content.length) {
-          this.setCursorStatus(dom, 'end')
-          clearInterval(printInterval)
-        }
-      }, speed)
+            ".app-container-right-content"
+          )
+        appContainerRightContent.scrollTop = appContainerRightContent.scrollHeight
+      } else {
+        let index = 0;
+        this.setCursorStatus(dom, "typing");
+        const printInterval = setInterval(() => {
+          dom.innerText += content[index];
+          index++;
+          const appContainerRightContent = document.querySelector(
+            ".app-container-right-content"
+          );
+          appContainerRightContent.scrollTop =
+            appContainerRightContent.scrollHeight;
+          if (index >= content.length) {
+            this.setCursorStatus(dom, "end");
+            clearInterval(printInterval);
+          }
+        }, speed);
+      }
+      
     },
     setCursorStatus(dom, status) {
       const classList = {
-        loading: 'typing blinker',
-        typing: 'typing',
-        end: ''
-      }
-      dom.className = classList[status]
+        loading: "typing blinker",
+        typing: "typing",
+        end: "",
+      };
+      dom.className = classList[status];
     },
     async handleLoad() {
-      this.loading = true
-      this.pageNo = this.pageNo - 1
+      this.loading = true;
+      this.pageNo = this.pageNo - 1;
       const { data } = await fetchUserList({
         sessionId: this.sessionId,
-        pageNo: this.pageNo
-      })
-      const arr = []
+        pageNo: this.pageNo,
+      });
       data.records.map((item) => {
-        arr.push({
-          role: 'user',
-          content: item.question
-        })
-        arr.push({
-          role: 'assistant',
-          content: item.answer
-        })
-      })
-      this.Message = arr.concat(this.Message)
-      this.loading = false
-      console.log(data, 'datadata')
+        this.Message.unshift({
+          role: "assistant",
+          content: item.answer,
+        });
+        this.Message.unshift({
+          role: "user",
+          content: item.question,
+        });
+      });
+      this.Message.forEach((item, index) => {
+        this.$nextTick(() => {
+          const chat = document.querySelector(`#chat-${index}`);
+          if (chat) this.printText(chat, item.content);
+        });
+      });
+      this.loading = false;
+      // console.log(data, "datadata");
     },
     async handleGetHistory(item) {
-      this.state = false
-      this.loading = true
-      this.Message = []
-      this.defaults = item
+      this.state = false;
+      this.loading = true;
+      this.Message = [];
+      this.defaults = item;
+      this.currentItemUuid = item.uuid;
+      if (item.mask) {
+        this.selectMask.prompt = item.mask;
+      }else {
+        this.selectMask = {};
+      }
+      if (item.model) {
+        this.models = item.model;
+      }
       const { data } = await fetchUserList({
-        sessionId: item.uuid
-      })
-      this.sessionId = item.uuid
-      this.pageNo = data.pages
+        sessionId: item.uuid,
+      });
+      this.sessionId = item.uuid;
+      this.pageNo = data.pages;
       const { data: data2 } = await fetchUserList({
         sessionId: item.uuid,
-        pageNo: data.pages
-      })
-      const arr = []
+        pageNo: data.pages,
+      });
+      const arr = [];
       data2.records.map((item) => {
         arr.push({
-          role: 'user',
-          content: item.question
-        })
+          role: "user",
+          content: item.question,
+        });
         arr.push({
-          role: 'assistant',
-          content: item.answer
-        })
-      })
-      this.Message = arr
-      this.loading = false
+          role: "assistant",
+          content: item.answer,
+        });
+      });
+      this.Message = arr;
+      this.Message.forEach((item, index) => {
+        this.$nextTick(() => {
+          const chat = document.querySelector(`#chat-${index}`);
+          if (chat) this.printText(chat, item.content,1);
+        });
+      });
+      this.loading = false;
     },
     async init() {
-      const uuInfo = localStorage.getItem('uuInfo')
+      const uuInfo = localStorage.getItem("uuInfo");
       if (uuInfo) {
-        const uu = JSON.parse(uuInfo)
-        this.info = this.info.filter((v) => v.name != '新的聊天')
-        this.info = this.info.concat(uu)
-        localStorage.setItem('uuInfo', JSON.stringify(this.info))
+        const uu = JSON.parse(uuInfo);
+        this.info = this.info.filter((v) => v.name != "新的聊天");
+        this.info = this.info.concat(uu);
+        localStorage.setItem("uuInfo", JSON.stringify(this.info));
       } else {
         localStorage.setItem(
-          'uuInfo',
+          "uuInfo",
           JSON.stringify([
             {
               uuid: uuid,
-              name: '新的聊天',
-              model: '',
-              content: ''
-            }
+              name: "新的聊天",
+              model: this.models ? this.models : 'gpt-3.5-turbo',
+              mask: '',
+              content: "",
+            },
           ])
-        )
+        );
       }
-      const { data } = await fetchList()
-      this.mask = data.records
-      const { data: data2 } = await getModelList()
-      this.options = data2
-      console.log(data2, 'data2data2')
-      SSE.open((event) => [console.log(event, 'open')])
+      SSE.open((event) => {
+        console.log(event, "open")
+        this.connectFlag = true
+      })
       SSE.message((event) => {
-        if (event === '[DONE]') {
-          const item = this.Message.find((v) => v.state)
-          const index = this.Message.findIndex((v) => v.state)
+        if (event === "[DONE]") {
+          const item = this.Message.find((v) => v.state);
+          const index = this.Message.findIndex((v) => v.state);
           if (item) {
-            item.state = false
+            item.state = false;
             this.$nextTick(() => {
-              const chat = document.querySelector(`#chat-${index}`)
-              this.printText(chat, item.content)
-            })
+              const chat = document.querySelector(`#chat-${index}`);
+              this.printText(chat, item.content);
+            });
           }
         } else if (event.content) {
           this.$nextTick(() => {
             const appContainerRightContent = document.querySelector(
-              '.app-container-right-content'
-            )
+              ".app-container-right-content"
+            );
             appContainerRightContent.scrollTop =
-              appContainerRightContent.scrollHeight
-          })
-          const item = this.Message.find((v) => v.state)
-          const index = this.Message.findIndex((v) => v.state)
+              appContainerRightContent.scrollHeight;
+          });
+          const item = this.Message.find((v) => v.state);
+          const index = this.Message.findIndex((v) => v.state);
           if (item) {
-            item.content += event.content
+            item.content += event.content;
             this.$nextTick(() => {
-              const chat = document.querySelector(`#chat-${index}`)
-              this.setCursorStatus(chat, 'loading')
-            })
+              const chat = document.querySelector(`#chat-${index}`);
+              this.setCursorStatus(chat, "loading");
+            });
           } else {
             this.Message.push({
-              role: 'assistant',
+              role: "assistant",
               content: event.content,
               state: true
-            })
+            });
           }
         }
-      })
+      });
       SSE.error((event) => {
-        console.log(event, 'error')
-      })
+        console.log(event, "error");
+        this.connectFlag = false
+      });
       SSE.close((event) => {
-        console.log(event, 'close')
-      })
+        console.log(event, "close");
+        this.connectFlag = false
+      });
+      const { data } = await fetchList();
+      this.mask = data.records;
+      const { data: data2 } = await getModelList();
+      //this.options = data2;
+      data2.map((item) => {
+        // console.log(item, "item")
+        if (item.id.startsWith("gpt-3.5") || item.id.startsWith("gpt-4")) {
+          this.options.push(item);
+        }
+      });
     },
-    handleSetModel(models) {
-      this.model = models
-      this.state = false
-      this.handleAdd()
-      this.model = { maskName: '' }
-      console.log(models, 'xxx')
+    handleSetModel(mask) {
+      this.selectMask = mask;
+      this.state = false;
+      this.handleAdd(mask);
     },
-    handleAdd() {
-      const uuid = uuidv4()
+    handleAdd(mask) {
+      const uuid = uuidv4();
       const obj = {
         uuid: uuid,
-        name: this.model.maskName ? this.model.maskName : '新的聊天',
-        model: this.model ? this.model : {},
-        content: ''
-      }
-      this.info.push(obj)
-      this.defaults = obj
-      const uuInfo = localStorage.getItem('uuInfo')
+        name: mask.maskName ? mask.maskName : "新的聊天",
+        model: this.models ? this.models : '',
+        mask: mask.prompt,
+        content: "",
+      };
+      this.info.push(obj);
+      this.defaults = obj;
+      const uuInfo = localStorage.getItem("uuInfo");
       if (!uuInfo) {
-        localStorage.setItem('uuInfo', JSON.stringify([obj]))
+        localStorage.setItem("uuInfo", JSON.stringify([obj]));
       } else {
-        const uu = JSON.parse(uuInfo)
-        uu.push(obj)
-        localStorage.setItem('uuInfo', JSON.stringify(uu))
+        const uu = JSON.parse(uuInfo);
+        uu.push(obj);
+        localStorage.setItem("uuInfo", JSON.stringify(uu));
       }
     },
     async handleSend() {
-      this.time = new Date()
+      if (!this.question) return;
+      this.time = new Date();
       this.Message.push({
-        role: 'user',
-        content: this.question
-      })
+        role: "user",
+        content: this.question,
+      });
       this.$nextTick(() => {
         const appContainerRightContent = document.querySelector(
-          '.app-container-right-content'
-        )
+          ".app-container-right-content"
+        );
         appContainerRightContent.scrollTop =
-          appContainerRightContent.scrollHeight
-      })
+          appContainerRightContent.scrollHeight;
+      });
       const obj = {
         prompt: this.question,
         model: this.models,
-        mask: this.model.id,
+        mask: this.selectMask.prompt,
         sessionId: this.defaults.uuid,
-        enableContext: this.contextState
-      }
+        enableContext: this.contextState,
+      };
       chat(obj).then((response) => {
-        if (response.code === '00000') {
-          this.question = null
+        if (response.code === "00000") {
+          this.question = null;
         }
-      })
-    }
-  }
-}
+      });
+    },
+  },
+};
 </script>
 <style>
 .typing::after {
@@ -486,6 +511,16 @@ export default {
   position: absolute;
   top: 10px;
   right: 10px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.rename-chat {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 40px;
   width: 20px;
   height: 20px;
   cursor: pointer;
@@ -592,6 +627,10 @@ export default {
           background: #f2f6fc;
 
           .delete-mask {
+            display: block;
+          }
+
+          .rename-chat {
             display: block;
           }
         }

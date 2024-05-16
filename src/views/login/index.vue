@@ -49,12 +49,12 @@
 
       <div style="position:relative">
         <div class="tips">
-          <span>Username : admin</span>
-          <span>Password : any</span>
+          <span></span>
+          <span></span>
         </div>
         <div class="tips">
-          <span style="margin-right:18px;">Username : editor</span>
-          <span>Password : any</span>
+          <span style="margin-right:18px;"></span>
+          <span></span>
         </div>
 
         <el-button class="thirdparty-button" type="primary" @click="showDialog=true">
@@ -97,8 +97,8 @@ export default {
     }
     return {
       loginForm: {
-        loginName: 'admin',
-        password: '123456'
+        loginName: '',
+        password: ''
       },
       loginRules: {
         loginName: [{ required: true, trigger: 'blur'}],
@@ -248,14 +248,14 @@ $cursor: #fff;
 </style>
 
 <style lang="scss" scoped>
-$bg:#2d3a4b;
+
 $dark_gray:#889aa4;
 $light_gray:#eee;
 
 .login-container {
   min-height: 100%;
   width: 100%;
-  background-color: $bg;
+  background: #4c565c;
   overflow: hidden;
 
   .login-form {

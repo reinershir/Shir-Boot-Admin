@@ -6,8 +6,9 @@
  */
 import { EventSourcePolyfill } from 'event-source-polyfill'
 import { getToken } from '@/utils/auth'
+import store from '@/store'
 class SSE {
-    sse
+    sse = undefined
     constructor() {
       this.connect()
     }
@@ -16,13 +17,16 @@ class SSE {
         process.env.VUE_APP_BASE_API + 'gpt/chat/connect',
         {
           headers: {
-            'Access-Token': getToken()
+            'Access-Token': store.state.user.token
           },
           timeout: 0
         }
       )
     }
     open(callback) {
+      if (this.sse === undefined) {
+        this.connect()
+      }
       this.sse.addEventListener('open', (event) => {
         callback(event)
       })
@@ -43,6 +47,7 @@ class SSE {
       this.sse.addEventListener('close', (event) => {
         callback(event)
         this.sse.close()
+        this.sse = undefined
       })
     }
 }

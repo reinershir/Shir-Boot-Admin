@@ -97,7 +97,6 @@ const actions = {
         Object.assign(menuData, data)
         const tempAsyncRoutes = Object.assign([], asyncRoutes)
         generateMenu(tempAsyncRoutes, menuData)
-        console.log(tempAsyncRoutes)
         const accessedRoutes = tempAsyncRoutes || []
         commit('SET_ROUTES', accessedRoutes)
         resolve(accessedRoutes)

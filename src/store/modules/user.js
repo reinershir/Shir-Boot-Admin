@@ -49,9 +49,7 @@ const actions = {
   getInfo({ commit, state }) {
     return new Promise((resolve, reject) => {
       getInfo(state.token).then(response => {
-        console.log(response)
         const { data } = response
-        console.log(data)
         if (!data) {
           reject('Verification failed, please Login again.')
         }
@@ -61,13 +59,15 @@ const actions = {
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
-        }
-
+        }        
         commit('SET_ROLES', roles)
         commit('SET_NAME', nickName)
         commit('SET_AVATAR', profile)
         commit('SET_INTRODUCTION', remark)
         resolve(data)
+        // if(!roles.includes('admin')){
+        //   router.addRoutes([{ path: '/dashboard', redirect: '/ai/AiChat#/ai/ChatGPT', hidden: true }])
+        // }
       }).catch(error => {
         reject(error)
       })
