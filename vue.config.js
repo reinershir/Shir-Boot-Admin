@@ -6,7 +6,7 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || 'vue Element Admin' // page title
+const name = defaultSettings.title || 'Shir-Boot-Admin' // page title
 
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
@@ -46,7 +46,16 @@ module.exports = {
       alias: {
         '@': resolve('src')
       }
-    }
+    },
+    // module: {
+    //   rules: [
+    //     {
+    //       test: /\.mjs$/,
+    //       include: /node_modules/,
+    //       type: "javascript/auto"
+    //     },
+    //   ]
+    // }
   },
   chainWebpack(config) {
     // it can improve the speed of the first screen, it is recommended to turn on preload

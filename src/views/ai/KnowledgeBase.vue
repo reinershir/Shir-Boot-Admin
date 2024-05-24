@@ -1,7 +1,7 @@
 <template>
   <div>
     <div style="width:75%;height:550px;border: 1px solid black;border-radius: 15px;float:left;">
-      <markdown-it-vue ref="markdownIt" class="md-body" :options="options" :content="content" />
+      <div ref="markdownIt" class="md-body" :options="options" :content="content" />
     </div>
 
     <div ref="rightPanel" style="width:25%;float:left;border: 1px solid black;height:550px;border-radius: 15px;">
@@ -68,15 +68,14 @@
 </template>
 
 <script>
-import MarkdownItVue from 'markdown-it-vue'
+
 import { getModelList } from '@/api/chatgpt'
-import 'markdown-it-vue/dist/markdown-it-vue.css'
 import { getToken } from '@/utils/auth' // get token from cookie
 import { EventSourcePolyfill } from 'event-source-polyfill'
 
 export default {
   components: {
-    MarkdownItVue
+    
   },
   data() {
     return {

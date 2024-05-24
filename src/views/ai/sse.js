@@ -10,16 +10,20 @@ import store from '@/store'
 class SSE {
     sse = undefined
     constructor() {
-      this.connect()
+      //this.connect()
     }
     connect() {
       this.sse = new EventSourcePolyfill(
         process.env.VUE_APP_BASE_API + 'gpt/chat/connect',
         {
           headers: {
-            'Access-Token': store.state.user.token
+            'Access-Token': store.state.user.token,
+            "Content-Type": "text/event-stream;charset=UTF-8",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
           },
-          timeout: 0
+          timeout: 0,
+          heartbeatTimeout: 10 * 60 * 1000,
         }
       )
     }
@@ -36,11 +40,17 @@ class SSE {
       this.sse.addEventListener('message', (event) => {
         const response = JSON.parse(event.data)
         callback(response)
+        if(response === "[DONE]"){
+          this.sse.close()
+          this.sse = undefined
+        }
       })
     }
     error(callback) {
       this.sse.addEventListener('error', (event) => {
         callback(event)
+        this.sse.close()
+        this.sse = undefined
       })
     }
     close(callback) {

@@ -1,5 +1,6 @@
 <template>
   <div class="chat-gpt">
+    
     <div class="app-container">
       <div
         class="app-container-left"
@@ -24,13 +25,13 @@
             v-for="(item, index) in info"
             :key="index"
             :class="
-              defaults.uuid === item.uuid
+              defaults.sessionId === item.sessionId
                 ? 'app-container-left-item-active app-container-left-item'
                 : 'app-container-left-item'
             "
             @click="handleGetHistory(item)"
           >
-            {{ item.name }}
+            {{ item.sessionName }}
             <div class="delete-mask" @click="handleDelete(item)">
               <i class="el-icon-close" />
             </div>
@@ -101,7 +102,9 @@
               <div>
                 <img src="@/assets/gpt.png" class="user-avatar" />
               </div>
-              <div :id="'chat-' + index" style="margin-top: 10px;" />
+              <div>
+                <vue-markdown :id="'chat-' + index" style="margin-top: 10px;" v-highlight :source="item.content"/>
+              </div>
             </div>
           </div>
         </div>
@@ -125,11 +128,12 @@
               v-model="question"
               type="textarea"
               :rows="3"
-              :autosize="{ minRows: 3, maxRows: 3 }"
+              :autosize="{ minRows: 3, maxRows: 10 }"
+              @keyup.enter.native="handleSend"
               placeholder="请输入内容"
             />
             <div class="app-container-right-footer-btn">
-              <el-button type="primary" @click="handleSend"> 发送 </el-button>
+              <el-button type="primary" @click="handleSend" > 发送 </el-button>
             </div>
           </div>
         </div>
@@ -166,122 +170,142 @@
 <script>
 import { chat, getModelList } from "@/api/chatgpt";
 import { fetchList } from "@/api/mask";
-import { fetchList as fetchUserList } from "@/api/chat-history";
+import { fetchList as fetchChatHistory } from "@/api/chat-history";
+import { fetchList as fetchChatSession, create as createChatSession, update as updateChatSession, deleteById as deleteChatSession} from "@/api/chat-session";
 import SSE from "./sse";
-import { v4 as uuidv4 } from "uuid";
 import { mapGetters } from "vuex";
-const uuid = uuidv4();
+
+import VueMarkdown from 'vue-markdown'
+
 export default {
   name: 'chatGPT',
+  components: { VueMarkdown },
   data() {
     return {
       visible: false,
       contextState: true,
-      connectFlag: false,
       renameVisible: false,
       loading: false,
+      typing: false,
+      connectFlag: false,
       renameName: "",
       selectMask: { prompt: "", maskName: ""},
       mask: [],
-      info: [
-        {
-          uuid: uuid,
-          name: "新的聊天",
-          mask: "",
-          model: "",
-          content: "",
-        },
-      ],
+      info: [],
       defaults: {
-        uuid: uuid,
-        name: "新的聊天",
-        model: "",
-        content: "",
+        sessionId: "",
+        sessionName: "新的聊天",
+        model: "gpt-3.5-turbo",
+        maskId: "",
         mask: "",
       },
       Message: [],
       question: "",
-      sessionId: "",
       pageNo: 1,
       state: false,
       models: "gpt-3.5-turbo",
       options: [],
       currentItemUuid: "",
+      queue: [],
     };
   },
   computed: {
     ...mapGetters(["avatar"]),
   },
-  mounted() {
+  created() {
     this.init();
   },
+  destroyed() {
+    this.typing = false
+  },
+  watch: {
+    
+  },
+  // mounted() {
+  //   this.init();
+  // },
   methods: {
     handleDelete(item) {
-      this.info = this.info.filter((i) => i.uuid !== item.uuid);
-      localStorage.setItem("uuInfo", JSON.stringify(this.info));
+      deleteChatSession(item.sessionId).then(response=>{
+        this.info = this.info.filter((i) => i.sessionId !== item.sessionId);
+      })
     },
     handleSetting() {
       this.visible = true;
     },
     handleRename(item){
       this.renameVisible = true;
-      this.renameName = item.name;
+      this.renameName = item.sessionName;
     },
     Rename() {
-      const currentItem =  this.info.find(v => this.currentItemUuid === v.uuid );
+      const currentItem =  this.info.find(v => this.currentItemUuid === v.sessionId );
       if (currentItem) {
-        currentItem.name = this.renameName;
-        localStorage.setItem("uuInfo", JSON.stringify(this.info));
+        const data = {}
+        Object.assign(data,currentItem)
+        data.sessionName = this.renameName;
+        updateChatSession(data).then(response=>{
+          currentItem.sessionName = this.renameName;
+        })
       }
       this.renameVisible = false;
     },
     handleCommand(mod) {
       this.models = mod;
-      const currentItem =  this.info.find(v => this.currentItemUuid === v.uuid );
+      const currentItem =  this.info.find(v => this.currentItemUuid === v.sessionId );
       if (currentItem) {
         currentItem.model = mod;
         localStorage.setItem("uuInfo", JSON.stringify(this.info));
       }
       
     },
-    printText(dom, content, speed = 50) {
+    printText(item, content, speed = 50) {
       if (speed<10) {
-        dom.innerText += content
+        //dom.innerText += content
+        item.content += content
         const appContainerRightContent = document.querySelector(
             ".app-container-right-content"
           )
         appContainerRightContent.scrollTop = appContainerRightContent.scrollHeight
       } else {
         let index = 0;
-        this.setCursorStatus(dom, "typing");
+        //this.setCursorStatus(dom, "typing");
         const printInterval = setInterval(() => {
-          dom.innerText += content[index];
+          //dom.innerText += content[index];
+          
+          const str = item.content
+          const length = str.length
+          if(index!=0){
+            item.content = str.substr(0, length - 1);
+          }
+          const next = this.queue.shift(index)
+          //console.log(next,"queue")
+          item.content += next + "▌";
           index++;
           const appContainerRightContent = document.querySelector(
             ".app-container-right-content"
           );
-          appContainerRightContent.scrollTop =
-            appContainerRightContent.scrollHeight;
-          if (index >= content.length) {
-            this.setCursorStatus(dom, "end");
+          appContainerRightContent.scrollTop = appContainerRightContent.scrollHeight;
+          //队列消耗完毕且AI返回完毕清除定时
+          if (this.queue.length<1 && !this.typing) {
+            //this.setCursorStatus(dom, "end");
+            item.content = str.substr(0, length - 1);
             clearInterval(printInterval);
           }
         }, speed);
       }
-      
     },
-    setCursorStatus(dom, status) {
-      const classList = {
-        loading: "typing blinker",
-        typing: "typing",
-        end: "",
-      };
-      dom.className = classList[status];
-    },
+    // setCursorStatus(dom, status) {
+    //   const classList = {
+    //     loading: "typing blinker",
+    //     typing: "typing",
+    //     end: "",
+    //   };
+    //   dom.className = classList[status];
+    // },
     async handleLoad() {
       this.loading = true;
       this.pageNo = this.pageNo - 1;
-      const { data } = await fetchUserList({
+      const { data } = await fetchChatHistory({
         sessionId: this.sessionId,
         pageNo: this.pageNo,
       });
@@ -297,8 +321,9 @@ export default {
       });
       this.Message.forEach((item, index) => {
         this.$nextTick(() => {
-          const chat = document.querySelector(`#chat-${index}`);
-          if (chat) this.printText(chat, item.content);
+          this.content[index] = item.content
+          //const chat = document.querySelector(`#chat-${index}`);
+          //if (chat) this.printText(chat, item.content,index);
         });
       });
       this.loading = false;
@@ -306,25 +331,30 @@ export default {
     },
     async handleGetHistory(item) {
       this.state = false;
+      //如果在打印中就点击其它对话框
+      if(this.typing){
+        this.completeEvent()
+      }
       this.loading = true;
       this.Message = [];
       this.defaults = item;
-      this.currentItemUuid = item.uuid;
+      this.currentItemUuid = item.sessionId;
       if (item.mask) {
         this.selectMask.prompt = item.mask;
+        this.selectMask.maskId = item.id
       }else {
         this.selectMask = {};
       }
       if (item.model) {
         this.models = item.model;
       }
-      const { data } = await fetchUserList({
-        sessionId: item.uuid,
+      const { data } = await fetchChatHistory({
+        sessionId: item.sessionId,
       });
-      this.sessionId = item.uuid;
+      this.sessionId = item.sessionId;
       this.pageNo = data.pages;
-      const { data: data2 } = await fetchUserList({
-        sessionId: item.uuid,
+      const { data: data2 } = await fetchChatHistory({
+        sessionId: item.sessionId,
         pageNo: data.pages,
       });
       const arr = [];
@@ -338,84 +368,101 @@ export default {
           content: item.answer,
         });
       });
-      this.Message = arr;
-      this.Message.forEach((item, index) => {
+      
+      this.content = [];
+      arr.forEach((item, index) => {
         this.$nextTick(() => {
-          const chat = document.querySelector(`#chat-${index}`);
-          if (chat) this.printText(chat, item.content,1);
+          this.content[index] = item.content
+          //if (chat) this.content += item.content;
         });
+      });
+      this.Message = arr;
+      this.$nextTick(() => {
+        const appContainerRightContent = document.querySelector(
+          ".app-container-right-content"
+        );
+        appContainerRightContent.scrollTop =
+          appContainerRightContent.scrollHeight;
       });
       this.loading = false;
     },
-    async init() {
-      const uuInfo = localStorage.getItem("uuInfo");
-      if (uuInfo) {
-        const uu = JSON.parse(uuInfo);
-        this.info = this.info.filter((v) => v.name != "新的聊天");
-        this.info = this.info.concat(uu);
-        localStorage.setItem("uuInfo", JSON.stringify(this.info));
-      } else {
-        localStorage.setItem(
-          "uuInfo",
-          JSON.stringify([
-            {
-              uuid: uuid,
-              name: "新的聊天",
-              model: this.models ? this.models : 'gpt-3.5-turbo',
-              mask: '',
-              content: "",
-            },
-          ])
-        );
+    completeEvent(event) {
+      this.typing = false
+      const item = this.Message.find((v) => v.state);
+      const index = this.Message.findIndex((v) => v.state);
+      if (item) {
+        item.state = false;
+        if(event){
+          this.queue.push(event.content)
+        }
+        // this.$nextTick(() => {
+        //   //const chat = document.querySelector(`#chat-${index}`);
+        //   this.printText(item, item.content,100);
+        // });
       }
-      SSE.open((event) => {
-        console.log(event, "open")
-        this.connectFlag = true
-      })
-      SSE.message((event) => {
-        if (event === "[DONE]") {
-          const item = this.Message.find((v) => v.state);
-          const index = this.Message.findIndex((v) => v.state);
-          if (item) {
-            item.state = false;
-            this.$nextTick(() => {
-              const chat = document.querySelector(`#chat-${index}`);
-              this.printText(chat, item.content);
-            });
-          }
-        } else if (event.content) {
-          this.$nextTick(() => {
-            const appContainerRightContent = document.querySelector(
-              ".app-container-right-content"
-            );
-            appContainerRightContent.scrollTop =
-              appContainerRightContent.scrollHeight;
+    },
+    onMessageCallback(event) {
+      if (event === "[DONE]") {
+        this.completeEvent(event)
+      } else if (event.content) {
+        this.$nextTick(() => {
+          const appContainerRightContent = document.querySelector(
+            ".app-container-right-content"
+          );
+          appContainerRightContent.scrollTop =
+            appContainerRightContent.scrollHeight;
+        });
+        const item = this.Message.find((v) => v.state);
+       
+        const index = this.Message.findIndex((v) => v.state);
+        if (!item) {
+          this.Message.push({
+            role: "assistant",
+            content: "",
+            state: true
           });
-          const item = this.Message.find((v) => v.state);
-          const index = this.Message.findIndex((v) => v.state);
-          if (item) {
-            item.content += event.content;
+          const str = (event.content + "").split('')
+          str.forEach((v,i)=>{
+            this.queue.push(v)
+          })
+        }else{
+          const str = (event.content + "").split('')
+          str.forEach((v,i)=>{
+            this.queue.push(v)
+          })
+          if(!this.typing){
+            this.typing = true
             this.$nextTick(() => {
-              const chat = document.querySelector(`#chat-${index}`);
-              this.setCursorStatus(chat, "loading");
-            });
-          } else {
-            this.Message.push({
-              role: "assistant",
-              content: event.content,
-              state: true
+              this.printText(item,event.content,30)
             });
           }
         }
-      });
-      SSE.error((event) => {
-        console.log(event, "error");
-        this.connectFlag = false
-      });
-      SSE.close((event) => {
-        console.log(event, "close");
-        this.connectFlag = false
-      });
+      }
+    },
+    async init() {
+      fetchChatSession(data).then(response=>{
+        if (response.data.records.length<1 && this.info.length<1) {
+          const first = this.handleAdd(this.defaults)
+          if(first){
+            this.currentItemUuid = frst.sessionId
+          }
+        }else{
+          this.info = response.data.records
+        }
+      })
+      // SSE.open((event) => {
+      //   console.log(event, "open")
+      //   this.connectFlag = true
+      // })
+      // SSE.message((event) => this.onMessageCallback(event));
+      // SSE.error((event) => {
+      //   console.log(event, "error");
+      //   this.connectFlag = false
+      // });
+      // SSE.close((event) => {
+      //   console.log(event, "close");
+      //   this.connectFlag = false
+      // });
       const { data } = await fetchList();
       this.mask = data.records;
       const { data: data2 } = await getModelList();
@@ -433,32 +480,20 @@ export default {
       this.handleAdd(mask);
     },
     handleAdd(mask) {
-      const uuid = uuidv4();
       const obj = {
-        uuid: uuid,
-        name: mask.maskName ? mask.maskName : "新的聊天",
+        sessionName: mask.maskName ? mask.maskName : "新的聊天",
         model: this.models ? this.models : '',
         mask: mask.prompt,
-        content: "",
+        maskId: mask.id,
       };
-      this.info.push(obj);
-      this.defaults = obj;
-      const uuInfo = localStorage.getItem("uuInfo");
-      if (!uuInfo) {
-        localStorage.setItem("uuInfo", JSON.stringify([obj]));
-      } else {
-        const uu = JSON.parse(uuInfo);
-        uu.push(obj);
-        localStorage.setItem("uuInfo", JSON.stringify(uu));
-      }
+      return createChatSession(obj).then(response=>{
+        obj.sessionId = response.data.sessionId
+        this.info.push(obj);
+        return obj
+      })
     },
     async handleSend() {
       if (!this.question) return;
-      this.time = new Date();
-      this.Message.push({
-        role: "user",
-        content: this.question,
-      });
       this.$nextTick(() => {
         const appContainerRightContent = document.querySelector(
           ".app-container-right-content"
@@ -466,18 +501,30 @@ export default {
         appContainerRightContent.scrollTop =
           appContainerRightContent.scrollHeight;
       });
+      
       const obj = {
+        sessionId: this.currentItemUuid,
         prompt: this.question,
         model: this.models,
         mask: this.selectMask.prompt,
-        sessionId: this.defaults.uuid,
         enableContext: this.contextState,
       };
-      chat(obj).then((response) => {
-        if (response.code === "00000") {
-          this.question = null;
+      SSE.open((event) => {
+        if(this.question){
+          this.Message.push({
+            role: "user",
+            content: this.question,
+          });
+          chat(obj).then((response) => {
+            if (response.code === "00000") {
+              this.question = null;
+            }
+          });
         }
-      });
+        
+      })
+      SSE.message((event) => this.onMessageCallback(event));
+      
     },
   },
 };
@@ -488,7 +535,12 @@ export default {
 }
 
 .blinker::after {
-  animation: blinker 1s step-end infinite;
+  animation: blink 1.2s step-end infinite;
+  display: inline-block;
+  width: 2px;
+  height: 20px;
+  margin-left: 2px;
+  vertical-align: sub;
 }
 
 @keyframes blinker {
