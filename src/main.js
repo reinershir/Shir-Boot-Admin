@@ -24,12 +24,11 @@ import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css' // 选择需要的样式
 
 Vue.directive('highlight', (el) => {
-  let blocks = el.querySelectorAll('pre code')
+  const blocks = el.querySelectorAll('pre code')
   blocks.forEach((block) => {
     hljs.highlightBlock(block)
   })
 })
-  
 
 /**
  * If you don't want to use mock-server

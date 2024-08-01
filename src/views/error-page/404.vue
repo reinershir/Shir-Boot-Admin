@@ -21,14 +21,20 @@
 </template>
 
 <script>
-
+import checkPermission from '@/utils/permission' // 权限判断函数
 export default {
   name: 'Page404',
   computed: {
     message() {
       return 'The webmaster said that you can not enter this page...'
     }
-  }
+  },
+  created(){
+    // mark:chat-gpt-user
+    if(checkPermission(['user','普通用户'])) {
+      this.$router.push({ path: '/dashboard'})
+    }
+  },
 }
 </script>
 

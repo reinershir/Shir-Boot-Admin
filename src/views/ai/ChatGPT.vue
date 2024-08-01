@@ -1,5 +1,6 @@
 <template>
-  <div class="chat-gpt">
+  <!-- mark:gpt-user-if -->
+  <div :class="{'chat-gpt':!checkPermission(['user','普通用户']),'chat-gpt-nomal-user':checkPermission(['user','普通用户'])}">
     
     <div class="app-container">
       <div
@@ -59,7 +60,7 @@
       </div>
       <div v-else class="app-container-right">
         <div class="app-container-right-title">
-          <span>{{ defaults.name }}</span>
+          <span>{{ defaults.sessionName }}</span>
         </div>
         <div v-loading="loading" class="app-container-right-content">
           <div v-if="Message.length > 0 && pageNo > 1" class="loading">
@@ -93,9 +94,9 @@
                     class="user-avatar"
                   />
                 </div>
-                <div style="display: flex; align-items: center">
-                  {{ item.content }}
-                </div>
+                <div style="display: flex;flex-direction: column; align-items: center;" v-html="item.content" />
+                  <!-- {{ item.content }} 
+                </div>-->
               </div>
             </div>
             <div v-else class="app-container-right-item-assistant">
@@ -108,12 +109,17 @@
             </div>
           </div>
         </div>
+        <el-card style="z-index:initial;position:absolute ;bottom: 170px;;width:140px;overflow: auto;max-height: calc(100% - 140px);" v-show="uploaded.uploadImgVisible">
+          <el-image 
+            style="width: 100px; height: 100px"
+            :src="uploaded.uploadedImgUrl"  alt="upload img"
+          />
+        </el-card>
         <div class="app-container-right-footer">
-          <div style="display: flex">
+          <div style="display: flex;padding: 5px;">
             <el-tooltip
               class="item"
               placement="top-start"
-              style="margin-right: 10px"
             >
               <template #content>
                 是否开启上下文
@@ -121,11 +127,83 @@
               </template>
               <el-button icon="el-icon-reading" circle />
             </el-tooltip>
-            <el-button icon="el-icon-s-tools" circle @click="handleSetting" />
+
+             <!-- <el-tooltip
+              class="item"
+              placement="top-start"
+            >
+              <template #content>
+                是否开启集成谷歌搜索功能
+                <el-switch v-model="enableGoogleSearch" @change="handGoogleSearchSwitch"/>
+                <br/>
+                是否开启RGA文档对话
+                <el-switch v-model="enableRgaContext" @change="handRgaContentSwitch"/>
+              </template>
+              <el-button icon="el-icon-search" circle />
+            </el-tooltip>  -->
+            
+
+            <el-tooltip
+              class="item"
+              placement="top-start"
+              slot="reference"
+              style="margin-left: 10px"
+            >
+              <template #content>
+                发送图片 (tip:图片需要公网可访问)
+              </template>
+              <el-upload
+                class="item"
+                :action="uploaded.uploadUrl"
+                :on-success="uploadImgSuccess"
+                :show-file-list="false"
+                :limit="1"
+                accept=".jpg,.png">
+                <!-- <div slot="file" slot-scope="{file}">
+                  <img
+                    class="el-upload-list__item-thumbnail"
+                    :src="file.url" alt=""
+                  >
+                </div> -->
+                <el-button  circle icon="el-icon-picture-outline" :disabled="!models.startsWith('gpt-4')" />
+              </el-upload>
+            </el-tooltip>
+
+            <!-- <el-tooltip
+              class="item"
+              placement="top-start"
+              slot="reference"
+            >
+              <template #content>
+                发送文档
+              </template>
+              <el-upload
+                class="item"
+                :data="{sessionId:currentItemUuid}"
+                :action="uploaded.uploadRgaUrl"
+                :on-success="uploadDocSuccess"
+                :show-file-list="false"
+                :limit="1"
+                accept=".pdf,.txt,.doc,.docx,.html">
+                <el-button  circle icon="el-icon-document-add" />
+              </el-upload>
+            </el-tooltip> -->
+
+            <el-button icon="el-icon-s-tools" style="margin-left: 10px;" circle @click="handleSetting" />
+
+            <el-select v-model="models" @change="handleCommand" style="width:110px;margin-left:10px;">
+              <el-option
+                v-for="item in options"
+                :key="item.id"
+                :label="item.id"
+                :value="item.id"
+              />
+            </el-select>
           </div>
           <div class="app-container-right-footer-input">
             <el-input
               v-model="question"
+              style="height:100%"
               type="textarea"
               :rows="3"
               :autosize="{ minRows: 3, maxRows: 10 }"
@@ -174,7 +252,7 @@ import { fetchList as fetchChatHistory } from "@/api/chat-history";
 import { fetchList as fetchChatSession, create as createChatSession, update as updateChatSession, deleteById as deleteChatSession} from "@/api/chat-session";
 import SSE from "./sse";
 import { mapGetters } from "vuex";
-
+import checkPermission from '@/utils/permission' // 权限判断函数
 import VueMarkdown from 'vue-markdown'
 
 export default {
@@ -188,6 +266,13 @@ export default {
       loading: false,
       typing: false,
       connectFlag: false,
+      uploaded: {
+        uploadImgVisible: false,
+        uploadedImgUrl: '',
+        uploadedImgName: '',
+        uploadUrl: process.env.VUE_APP_BASE_API+'files/upload?sessionId=',
+        uploadRgaUrl: process.env.VUE_APP_BASE_API+'chatTools/rga/upload',
+      },
       renameName: "",
       selectMask: { prompt: "", maskName: ""},
       mask: [],
@@ -195,7 +280,7 @@ export default {
       defaults: {
         sessionId: "",
         sessionName: "新的聊天",
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         maskId: "",
         mask: "",
       },
@@ -203,7 +288,9 @@ export default {
       question: "",
       pageNo: 1,
       state: false,
-      models: "gpt-3.5-turbo",
+      models: "gpt-4o",
+      enableGoogleSearch: false,
+      enableRgaContext: false,
       options: [],
       currentItemUuid: "",
       queue: [],
@@ -225,6 +312,17 @@ export default {
   //   this.init();
   // },
   methods: {
+    checkPermission,
+    handGoogleSearchSwitch(newValue) {
+      if(newValue){
+        this.enableRgaContext = false
+      }
+    },
+    handRgaContentSwitch(newValue) {
+      if(newValue){
+        this.enableGoogleSearch = false
+      }
+    },
     handleDelete(item) {
       deleteChatSession(item.sessionId).then(response=>{
         this.info = this.info.filter((i) => i.sessionId !== item.sessionId);
@@ -255,6 +353,13 @@ export default {
       if (currentItem) {
         currentItem.model = mod;
         localStorage.setItem("uuInfo", JSON.stringify(this.info));
+        const data = {}
+        Object.assign(data,currentItem)
+        data.model = mod;
+        // 同步修改服务端的model配置
+        updateChatSession(data).then(response=>{
+          
+        })
       }
       
     },
@@ -271,15 +376,15 @@ export default {
         //this.setCursorStatus(dom, "typing");
         const printInterval = setInterval(() => {
           //dom.innerText += content[index];
-          
           const str = item.content
           const length = str.length
           if(index!=0){
             item.content = str.substr(0, length - 1);
           }
           const next = this.queue.shift(index)
-          //console.log(next,"queue")
-          item.content += next + "▌";
+          if(next){
+            item.content += next + "▌";
+          }
           index++;
           const appContainerRightContent = document.querySelector(
             ".app-container-right-content"
@@ -310,6 +415,7 @@ export default {
         pageNo: this.pageNo,
       });
       data.records.map((item) => {
+        
         this.Message.unshift({
           role: "assistant",
           content: item.answer,
@@ -363,10 +469,12 @@ export default {
           role: "user",
           content: item.question,
         });
-        arr.push({
-          role: "assistant",
-          content: item.answer,
-        });
+        if(item.answer && item.answer.length>0){
+          arr.push({
+            role: "assistant",
+            content: item.answer,
+          });
+        }
       });
       
       this.content = [];
@@ -440,7 +548,7 @@ export default {
       }
     },
     async init() {
-      fetchChatSession(data).then(response=>{
+      fetchChatSession({"page":1,"pageSize":99999}).then(response=>{
         if (response.data.records.length<1 && this.info.length<1) {
           const first = this.handleAdd(this.defaults)
           if(first){
@@ -463,7 +571,7 @@ export default {
       //   console.log(event, "close");
       //   this.connectFlag = false
       // });
-      const { data } = await fetchList();
+      const { data } = await fetchList({"pageSize":100});
       this.mask = data.records;
       const { data: data2 } = await getModelList();
       //this.options = data2;
@@ -493,7 +601,24 @@ export default {
       })
     },
     async handleSend() {
-      if (!this.question) return;
+      if (!this.question) {
+        this.$notify({
+          title: 'Success',
+          message: "请输入内容",
+          type: 'success',
+          duration: 2000
+        })
+        return
+      }
+      if (this.currentItemUuid=="") {
+        this.$notify({
+          title: 'Success',
+          message: '请点击左侧选择一个会话',
+          type: 'success',
+          duration: 2000
+        })
+        return
+      }
       this.$nextTick(() => {
         const appContainerRightContent = document.querySelector(
           ".app-container-right-content"
@@ -508,28 +633,72 @@ export default {
         model: this.models,
         mask: this.selectMask.prompt,
         enableContext: this.contextState,
+        enableGoogleSearch: this.enableGoogleSearch,
+        enableRgaContext: this.enableRgaContext,
+        imageUrl: this.uploaded.uploadedImgUrl,
+        lang: this.$i18n.locale,
       };
       SSE.open((event) => {
         if(this.question){
+          //发送图片内容时做特殊处理
           this.Message.push({
             role: "user",
-            content: this.question,
+            content: this.uploaded.uploadedImgUrl!=''?"<span><img src='"+this.uploaded.uploadedImgUrl+"' style='width:180px;height:140px; '/></span> <br /> <span>"+this.question+"</span>":
+             this.question,
           });
           chat(obj).then((response) => {
             if (response.code === "00000") {
-              this.question = null;
+              this.clearInput()
             }
           });
         }
-        
+      })
+      SSE.error((event) => {
+        this.clearInput()
+        this.Message.push({
+          role: "assistant",
+          content: "Opps, it looks like the robot has gone to Mars. Please refresh and try again."
+        })
       })
       SSE.message((event) => this.onMessageCallback(event));
       
+    },
+    uploadImgSuccess(response, file, fileList) {
+      const imgName = response.data
+      this.uploaded.uploadedImgName = imgName
+      this.uploaded.uploadedImgUrl = process.env.VUE_APP_BASE_API+"images/"+imgName
+      this.uploaded.uploadImgVisible = true
+    },
+    uploadDocSuccess(response, file, fileList) {
+      const docName = response.data
+      this.enableRgaContext = true
+      this.enableGoogleSearch = false
+      this.Message.push({
+        role: "user",
+        content: "<span><i v-else class='el-icon-document file-uploader-icon' style='height:140px;' ></i></span><span>"+docName+"</span>",
+      });
+    },
+    clearInput () {
+      this.question = null;
+      this.uploaded.uploadImgVisible = false
+      this.uploaded.uploadedImgUrl = ''
     },
   },
 };
 </script>
 <style>
+.file-uploader-icon:hover {
+  border-color: #409EFF;
+}
+.file-uploader-icon {
+  height:140px;
+  font-size: 90px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  line-height: 178px;
+  text-align: center;
+}
 .typing::after {
   content: "▌";
 }
@@ -608,6 +777,15 @@ export default {
   position: relative;
   width: 100%;
   height: calc(100vh - 84px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chat-gpt-nomal-user {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 50px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -711,6 +889,8 @@ export default {
       width: 100%;
       height: 100%;
       display: flex;
+      flex-wrap: wrap;
+      flex-direction:row;
       justify-content: center;
       align-items: center;
       padding: 0 100px;

@@ -119,6 +119,7 @@ export const constantRoutes = [
   },
   {
     path: '/404',
+     // mark:gpt-user-if
     component: () => import('@/views/error-page/404'),
     hidden: true
   }

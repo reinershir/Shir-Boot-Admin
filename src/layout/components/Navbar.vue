@@ -1,8 +1,8 @@
 <template>
   <div class="navbar">
-    <hamburger id="hamburger-container" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
+    <hamburger id="hamburger-container" v-if="!checkPermission(['user','普通用户'])" :is-active="sidebar.opened" class="hamburger-container" @toggleClick="toggleSideBar" />
 
-    <breadcrumb id="breadcrumb-container" class="breadcrumb-container" />
+    <breadcrumb id="breadcrumb-container" v-if="!checkPermission(['user','普通用户'])" class="breadcrumb-container" />
 
     <div class="right-menu">
       <template v-if="device!=='mobile'">
@@ -10,19 +10,19 @@
 
         <error-log class="errLog-container right-menu-item hover-effect" />
 
-        <screenfull id="screenfull" class="right-menu-item hover-effect" />
+        <screenfull id="screenfull" class="right-menu-item hover-effect" v-if="!checkPermission(['user','普通用户'])" />
 
-        <el-tooltip :content="$t('navbar.size')" effect="dark" placement="bottom">
+        <el-tooltip :content="$t('navbar.size')" effect="dark" placement="bottom" v-if="!checkPermission(['user','普通用户'])" >
           <size-select id="size-select" class="right-menu-item hover-effect" />
         </el-tooltip>
 
-        <lang-select class="right-menu-item hover-effect" />
+        <lang-select class="right-menu-item hover-effect" v-if="!checkPermission(['user','普通用户'])" />
 
       </template>
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="avatar-wrapper">
-          <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
+          <img :src="avatar?(avatar+'?imageView2/1/w/80/h/80'):'https://www.pngkit.com/png/detail/126-1262807_instagram-default-profile-picture-png.png?imageView2/1/w/80/h/80'" class="user-avatar">
           <i class="el-icon-caret-bottom" />
         </div>
         <el-dropdown-menu slot="dropdown">
@@ -86,6 +86,7 @@ import SizeSelect from '@/components/SizeSelect'
 import LangSelect from '@/components/LangSelect'
 import Search from '@/components/HeaderSearch'
 import { updatePassword } from '@/api/user'
+import checkPermission from '@/utils/permission' // 权限判断函数
 import md5 from 'js-md5'
 
 export default {
@@ -126,6 +127,7 @@ export default {
     ])
   },
   methods: {
+    checkPermission,
     toggleSideBar() {
       this.$store.dispatch('app/toggleSideBar')
     },

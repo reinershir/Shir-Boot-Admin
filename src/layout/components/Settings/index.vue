@@ -24,7 +24,7 @@
       </div>
       <a v-if="isShowJob" href="https://github.com/reinershir" target="_blank" class="job-link">
         <el-alert
-          title="内推请联系"
+          title="内推请联系QQ:1929696771"
           type="success"
           :closable="false"
         />

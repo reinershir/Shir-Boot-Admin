@@ -1,11 +1,12 @@
 <template>
-  <div :class="classObj" class="app-wrapper">
+  <div :class="classObj" class="app-wrapper" >
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
-    <sidebar class="sidebar-container" />
-    <div :class="{hasTagsView:needTagsView}" class="main-container">
-      <div :class="{'fixed-header':fixedHeader}">
-        <navbar />
-        <tags-view v-if="needTagsView" />
+    <sidebar class="sidebar-container" v-if="!checkPermission(['user','普通用户'])" />
+    <div :class="{hasTagsView:needTagsView,'main-container':!checkPermission(['user','普通用户'])}" >
+      <div :class="{'fixed-header':fixedHeader}" >
+        <navbar /> <!--v-if="!checkPermission(['user','普通用户'])"-->
+        <!-- mark:gpt-user-if -->
+        <tags-view v-if="needTagsView&&!checkPermission(['user','普通用户'])" />
       </div>
       <app-main />
       <right-panel v-if="showSettings">
@@ -20,6 +21,7 @@ import RightPanel from '@/components/RightPanel'
 import { AppMain, Navbar, Settings, Sidebar, TagsView } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState } from 'vuex'
+import checkPermission from '@/utils/permission' // 权限判断函数
 
 export default {
   name: 'Layout',
@@ -52,7 +54,8 @@ export default {
   methods: {
     handleClickOutside() {
       this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
-    }
+    },
+    checkPermission,
   }
 }
 </script>
