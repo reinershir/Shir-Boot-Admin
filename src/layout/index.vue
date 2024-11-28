@@ -1,9 +1,9 @@
 <template>
-  <div :class="classObj" class="app-wrapper" >
+  <div :class="classObj" class="app-wrapper">
     <div v-if="device==='mobile'&&sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
-    <sidebar class="sidebar-container" v-if="!checkPermission(['user','普通用户'])" />
-    <div :class="{hasTagsView:needTagsView,'main-container':!checkPermission(['user','普通用户'])}" >
-      <div :class="{'fixed-header':fixedHeader}" >
+    <sidebar v-if="!checkPermission(['user','普通用户'])" class="sidebar-container" />
+    <div :class="{hasTagsView:needTagsView,'main-container':!checkPermission(['user','普通用户'])}">
+      <div :class="{'fixed-header':fixedHeader}">
         <navbar /> <!--v-if="!checkPermission(['user','普通用户'])"-->
         <!-- mark:gpt-user-if -->
         <tags-view v-if="needTagsView&&!checkPermission(['user','普通用户'])" />
@@ -55,7 +55,7 @@ export default {
     handleClickOutside() {
       this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
     },
-    checkPermission,
+    checkPermission
   }
 }
 </script>

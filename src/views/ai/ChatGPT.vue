@@ -8,17 +8,20 @@
         :style="{ 'background-color': this.$store.state.settings.theme }"
       >
         <div class="app-container-left-title">
-          <span>Chat-gpt</span>
+          <span>Chat-GPT</span>
           <img src="@/assets/gpt.png" class="user-avatar" />
         </div>
         <span class="app-container-left-desc">打造你自己的人工智能助手</span>
         <div class="app-container-left-line">
           <el-button
-            style="padding: 5px 30px; border-radius: 15px"
+            style="padding: 2px 20px; border-radius: 15px;height:40px;"
             @click="state = true"
           >
             <img src="@/assets/mark.png" style="width: 20px" />
             面具
+          </el-button>
+          <el-button @click="handleAdd" style="padding: 2px 20px;border-radius: 15px;color:black;height:40px;">
+            <img src="@/assets/icons8-chat-50.png" style="width: 20px" />创建会话 
           </el-button>
         </div>
         <div class="app-container-left-content">
@@ -42,7 +45,7 @@
           </div>
         </div>
         <div class="app-container-left-footer">
-          <el-button @click="handleAdd"> 新的聊天 </el-button>
+          <!-- <el-button @click="handleAdd" style="border-radius: 15px;color:black;"> 新的会话 </el-button> -->
         </div>
       </div>
       <div v-if="state" class="app-container-right">
@@ -109,7 +112,8 @@
             </div>
           </div>
         </div>
-        <el-card style="z-index:initial;position:absolute ;bottom: 170px;;width:140px;overflow: auto;max-height: calc(100% - 140px);" v-show="uploaded.uploadImgVisible">
+        <el-card style="z-index:initial;position:absolute ;bottom: 170px;width:140px;overflow: auto;max-height: calc(100% - 140px);" v-show="uploaded.uploadImgVisible">
+          <!-- <el-button type="danger" icon="el-icon-delete" circle style="width:10px;height:10px;"></el-button> -->
           <el-image 
             style="width: 100px; height: 100px"
             :src="uploaded.uploadedImgUrl"  alt="upload img"
@@ -128,7 +132,7 @@
               <el-button icon="el-icon-reading" circle />
             </el-tooltip>
 
-             <!-- <el-tooltip
+            <el-tooltip
               class="item"
               placement="top-start"
             >
@@ -140,7 +144,7 @@
                 <el-switch v-model="enableRgaContext" @change="handRgaContentSwitch"/>
               </template>
               <el-button icon="el-icon-search" circle />
-            </el-tooltip>  -->
+            </el-tooltip>
             
 
             <el-tooltip
@@ -157,6 +161,7 @@
                 :action="uploaded.uploadUrl"
                 :on-success="uploadImgSuccess"
                 :show-file-list="false"
+                ref="chatImage"
                 :limit="1"
                 accept=".jpg,.png">
                 <!-- <div slot="file" slot-scope="{file}">
@@ -169,7 +174,7 @@
               </el-upload>
             </el-tooltip>
 
-            <!-- <el-tooltip
+            <el-tooltip
               class="item"
               placement="top-start"
               slot="reference"
@@ -187,9 +192,10 @@
                 accept=".pdf,.txt,.doc,.docx,.html">
                 <el-button  circle icon="el-icon-document-add" />
               </el-upload>
-            </el-tooltip> -->
+            </el-tooltip>
 
-            <el-button icon="el-icon-s-tools" style="margin-left: 10px;" circle @click="handleSetting" />
+            <!-- 设置按钮 -->
+            <!-- <el-button icon="el-icon-s-tools" style="margin-left: 10px;" circle @click="handleSetting" /> -->
 
             <el-select v-model="models" @change="handleCommand" style="width:110px;margin-left:10px;">
               <el-option
@@ -682,6 +688,7 @@ export default {
       this.question = null;
       this.uploaded.uploadImgVisible = false
       this.uploaded.uploadedImgUrl = ''
+      this.$refs['chatImage'].clearFiles()
     },
   },
 };
@@ -807,7 +814,7 @@ export default {
 
   .app-container-left {
     padding: 20px;
-    width: 350px;
+    width: 300px;
     border-radius: 15px 0 0 15px;
     height: 100%;
     display: flex;
@@ -825,13 +832,14 @@ export default {
     }
 
     .app-container-left-desc {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 400;
       margin-bottom: 20px;
     }
 
     .app-container-left-line {
       margin-top: 20px;
+      color:black;
     }
 
     .app-container-left-content {

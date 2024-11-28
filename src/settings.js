@@ -1,5 +1,5 @@
 module.exports = {
-  title: 'Hello AI',
+  title: 'Shir AI',
 
   /**
    * @type {boolean} true | false
