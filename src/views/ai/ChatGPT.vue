@@ -583,9 +583,9 @@ export default {
       //this.options = data2;
       data2.map((item) => {
         // console.log(item, "item")
-        if (item.id.startsWith("gpt-3.5") || item.id.startsWith("gpt-4")) {
-          this.options.push(item);
-        }
+        //if (item.id.startsWith("gpt-3.5") || item.id.startsWith("gpt-4")) {
+        this.options.push(item);
+        // }
       });
     },
     handleSetModel(mask) {
